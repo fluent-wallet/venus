@@ -16,8 +16,6 @@ type PostMeta = {
   requestIds: number[];
 };
 
-type NormalizedRpcError = { code: number; message: string; data?: unknown };
-
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -41,10 +39,6 @@ function isJsonRpcResponse(value: unknown): value is JsonRpcResponse {
   if (hasError && !isJsonRpcError(value.error)) return false;
 
   return true;
-}
-
-function normalizeJsonRpcError(error: JsonRpcError): NormalizedRpcError {
-  return { code: error.code, message: error.message, data: error.data };
 }
 
 function isAbortError(error: unknown): boolean {
@@ -96,7 +90,7 @@ export class HttpJsonRpcClient implements IChainRpc {
           endpoint: this.endpoint,
           method,
           requestId,
-          rpcError: normalizeJsonRpcError(response.error),
+          rpcError: response.error,
         },
       });
     }

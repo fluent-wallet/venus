@@ -1,9 +1,9 @@
 import Text from '@components/Text';
 import { ASSET_TYPE } from '@core/types';
-import { shortenAddress } from '@core/utils/address';
 import { numberWithCommas, truncate } from '@core/utils/balance';
 import useFormatBalance from '@hooks/useFormatBalance';
 import { useTheme } from '@react-navigation/native';
+import { shortenAddress } from '@utils/address';
 import type { AssetInfo } from '@utils/assetInfo';
 import { useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';

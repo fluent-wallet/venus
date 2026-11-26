@@ -11,8 +11,8 @@ import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
 import { createSilentLogger, mockDatabase } from '@core/testUtils/mocks';
 import { StubChainProvider } from '@core/testUtils/mocks/chainProviders';
 import { convertToChecksum } from '@core/utils/account';
-import { Interface } from '@ethersproject/abi';
 import { Q } from '@nozbe/watermelondb';
+import { Interface } from 'ethers';
 import { ReceiveAssetsSyncService } from './ReceiveAssetsSyncService';
 
 const tokenListIface = new Interface(ESpaceTokenList);

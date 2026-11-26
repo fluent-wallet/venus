@@ -122,7 +122,6 @@ const trackAssets = async ({
           concatMap((fetchAssetBalances) =>
             defer(() =>
               fetchAssetBalances({
-                key: `assetsBalanceInRules-${address.hex}-${network.chainId}`,
                 endpoint: network.endpoint,
                 accountAddress: address,
                 assets: assetsNeedFetch.map((asset) => ({ assetType: asset.type, contractAddress: asset.contractAddress })),

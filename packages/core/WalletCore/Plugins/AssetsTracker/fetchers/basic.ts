@@ -1,361 +1,150 @@
-import { createERC20Contract } from '@cfx-kit/dapp-utils/dist/contract';
-import { fetchChain, fetchChainBatch, fetchChainMulticall } from '@cfx-kit/dapp-utils/dist/fetch';
-import type { Address } from './../../../../database/models/Address';
+import ERC20ABI from '@core/contracts/ABI/ERC777';
+import MulticallABI from '@core/contracts/ABI/Multicall';
+import { HttpJsonRpcClient } from '@core/rpc';
+import type { Address as Base32Address } from 'cive';
+import { base32AddressToHex } from 'cive/utils';
+import { Interface } from 'ethers';
+import type { Address } from '../../../../database/models/Address';
 import { AssetType } from '../../../../database/models/Asset';
 import { NetworkType, networkRpcPrefixMap, networkRpcSuffixMap } from '../../../../database/models/Network';
-import { type Base32Address, convertBase32ToHex } from '../../../../utils/address';
 
-export const fetchNativeAssetBalance = ({ networkType, endpoint, accountAddress }: { networkType: NetworkType; endpoint: string; accountAddress: Address }) => {
-  switch (networkType) {
-    // case NetworkType.Conflux:
-    // case NetworkType.Ethereum:
-    default: {
-      const rpcPrefix = networkRpcPrefixMap[networkType];
-      const rpcSuffix = networkRpcSuffixMap[networkType];
+const erc20Interface = new Interface(ERC20ABI);
+const multicallInterface = new Interface(MulticallABI);
 
-      return fetchChain<string>({
-        url: endpoint,
-        method: `${rpcPrefix}_getBalance`,
-        params: [networkType === NetworkType.Conflux ? accountAddress.base32 : accountAddress.hex, rpcSuffix],
-      });
-    }
-  }
-};
+type BalanceParams = { networkType: NetworkType; endpoint: string; accountAddress: Address };
+type BalanceAsset = { contractAddress?: string | null; assetType?: Omit<AssetType, AssetType.ERC1155 | AssetType.ERC721> };
+type TokenInfoParams = { networkType: NetworkType; endpoint: string; contractAddress: string };
+type TokensInfoParams = { networkType: NetworkType; endpoint: string; assets: string[] };
 
-export const fetchConfluxNativeAssetBalance = ({ endpoint, accountAddress }: { endpoint: string; accountAddress: Address }) =>
-  fetchNativeAssetBalance({ networkType: NetworkType.Conflux, endpoint, accountAddress });
+export const fetchNativeAssetBalance = ({ networkType, endpoint, accountAddress }: BalanceParams) =>
+  new HttpJsonRpcClient(endpoint).request<string>(`${networkRpcPrefixMap[networkType]}_getBalance`, [
+    networkType === NetworkType.Conflux ? accountAddress.base32 : accountAddress.hex,
+    networkRpcSuffixMap[networkType],
+  ]);
 
-export const fetchEthereumNativeAssetBalance = ({ endpoint, accountAddress }: { endpoint: string; accountAddress: Address }) =>
-  fetchNativeAssetBalance({ networkType: NetworkType.Ethereum, endpoint, accountAddress });
+export const fetchConfluxNativeAssetBalance = (params: Omit<BalanceParams, 'networkType'>) =>
+  fetchNativeAssetBalance({ ...params, networkType: NetworkType.Conflux });
 
-export function fetchContractAssetBalance({
-  networkType,
-  endpoint,
-  accountAddress,
-  contractAddress,
-}: {
-  networkType: NetworkType;
-  endpoint: string;
-  accountAddress: Address;
-  contractAddress: string;
-}) {
-  switch (networkType) {
-    // case NetworkType.Conflux:
-    // case NetworkType.Ethereum:
-    default: {
-      const rpcPrefix = networkRpcPrefixMap[networkType];
-      const rpcSuffix = networkRpcSuffixMap[networkType];
-      return fetchChain<string>({
-        url: endpoint,
-        method: `${rpcPrefix}_call`,
-        params: [
-          {
-            to: contractAddress,
-            data: `0x70a08231000000000000000000000000${accountAddress.hex.slice(2)}`,
-          },
-          rpcSuffix,
-        ],
-      });
-    }
-  }
-}
+export const fetchEthereumNativeAssetBalance = (params: Omit<BalanceParams, 'networkType'>) =>
+  fetchNativeAssetBalance({ ...params, networkType: NetworkType.Ethereum });
 
-export const fetchConfluxERC20AssetBalance = ({
-  endpoint,
-  accountAddress,
-  contractAddress,
-}: {
-  endpoint: string;
-  accountAddress: Address;
-  contractAddress: string;
-}) => fetchContractAssetBalance({ networkType: NetworkType.Conflux, endpoint, accountAddress, contractAddress });
+export const fetchContractAssetBalance = ({ networkType, endpoint, accountAddress, contractAddress }: BalanceParams & { contractAddress: string }) =>
+  new HttpJsonRpcClient(endpoint).request<string>(`${networkRpcPrefixMap[networkType]}_call`, [
+    { to: contractAddress, data: erc20Interface.encodeFunctionData('balanceOf', [accountAddress.hex]) },
+    networkRpcSuffixMap[networkType],
+  ]);
 
-export const fetchEthereumERC20AssetBalance = ({
-  endpoint,
-  accountAddress,
-  contractAddress,
-}: {
-  endpoint: string;
-  accountAddress: Address;
-  contractAddress: string;
-}) => fetchContractAssetBalance({ networkType: NetworkType.Ethereum, endpoint, accountAddress, contractAddress });
+export const fetchConfluxERC20AssetBalance = (params: Omit<BalanceParams, 'networkType'> & { contractAddress: string }) =>
+  fetchContractAssetBalance({ ...params, networkType: NetworkType.Conflux });
 
-export const fetchAssetsBalance = async ({
-  networkType,
-  endpoint,
-  accountAddress,
-  assets,
-}: {
-  networkType: NetworkType;
-  endpoint: string;
-  accountAddress: Address;
-  assets: Array<{
-    contractAddress?: string | null;
-    assetType?: Omit<AssetType, AssetType.ERC1155 | AssetType.ERC721>;
-  }>;
-}) => {
-  return Promise.all(
+export const fetchEthereumERC20AssetBalance = (params: Omit<BalanceParams, 'networkType'> & { contractAddress: string }) =>
+  fetchContractAssetBalance({ ...params, networkType: NetworkType.Ethereum });
+
+export const fetchAssetsBalance = ({ assets, ...params }: BalanceParams & { assets: BalanceAsset[] }) =>
+  Promise.all(
     assets.map(({ contractAddress, assetType }) =>
-      assetType === AssetType.ERC20 && contractAddress
-        ? fetchContractAssetBalance({ networkType, endpoint, accountAddress, contractAddress })
-        : fetchNativeAssetBalance({ networkType, endpoint, accountAddress }),
+      assetType === AssetType.ERC20 && contractAddress ? fetchContractAssetBalance({ ...params, contractAddress }) : fetchNativeAssetBalance(params),
     ),
   );
-};
 
-export const fetchAssetsBalanceBatch = ({
-  endpoint,
-  accountAddress,
-  assets,
-  networkType,
-  key,
-}: {
-  endpoint: string;
-  accountAddress: Address;
-  assets: Array<{ assetType?: Omit<AssetType, AssetType.ERC1155 | AssetType.ERC721>; contractAddress?: string | null }>;
-  networkType: NetworkType;
-  key?: string;
-}) => {
+export const fetchAssetsBalanceBatch = ({ endpoint, accountAddress, assets, networkType }: BalanceParams & { assets: BalanceAsset[] }) => {
   if (assets.some(({ assetType, contractAddress }) => !assetType && !contractAddress)) {
-    throw new Error('assetType or contractAsset is required');
+    throw new Error('assetType or contractAddress is required');
   }
   const rpcPrefix = networkRpcPrefixMap[networkType];
-  return fetchChainBatch<Array<string>>({
-    key,
-    url: endpoint,
-    rpcs: assets.map(({ assetType, contractAddress }) => ({
+  return new HttpJsonRpcClient(endpoint).batch<string>(
+    assets.map(({ assetType, contractAddress }) => ({
       method: assetType === AssetType.Native ? `${rpcPrefix}_getBalance` : `${rpcPrefix}_call`,
       params: [
         assetType === AssetType.Native
           ? networkType === NetworkType.Conflux
             ? accountAddress.base32
             : accountAddress.hex
-          : {
-              to: contractAddress,
-              data: `0x70a08231000000000000000000000000${accountAddress.hex.slice(2)}`,
-            },
+          : { to: contractAddress, data: erc20Interface.encodeFunctionData('balanceOf', [accountAddress.hex]) },
         networkRpcSuffixMap[networkType],
       ],
     })),
-  });
+  );
 };
 
-export const fetchAssetsBalanceMulticall = ({
+export const fetchAssetsBalanceMulticall = async ({
   endpoint,
   accountAddress,
   assets,
   networkType,
   multicallContractAddress,
-  key,
-}: {
-  endpoint: string;
-  accountAddress: Address;
-  assets: Array<{ assetType?: Omit<AssetType, AssetType.ERC1155 | AssetType.ERC721>; contractAddress?: string | null }>;
-  networkType: NetworkType;
-  multicallContractAddress: string;
-  key?: string;
-}) => {
+}: BalanceParams & { assets: BalanceAsset[]; multicallContractAddress: string }): Promise<string[]> => {
   if (assets.some(({ assetType, contractAddress }) => !assetType && !contractAddress)) {
-    throw new Error('assetType or contractAsset is required');
+    throw new Error('assetType or contractAddress is required');
   }
-  const rpcPrefix = networkRpcPrefixMap[networkType];
+  const contractAssets = assets.filter(({ assetType }) => assetType !== AssetType.Native);
+  const nativeBalance = assets.some(({ assetType }) => assetType === AssetType.Native)
+    ? fetchNativeAssetBalance({ networkType, endpoint, accountAddress })
+    : undefined;
+  const contractBalances = contractAssets.length
+    ? new HttpJsonRpcClient(endpoint)
+        .request<string>(`${networkRpcPrefixMap[networkType]}_call`, [
+          {
+            to: multicallContractAddress,
+            data: multicallInterface.encodeFunctionData('aggregate', [
+              contractAssets.map(({ contractAddress }) => [
+                networkType === NetworkType.Conflux ? base32AddressToHex({ address: contractAddress as Base32Address }) : contractAddress,
+                erc20Interface.encodeFunctionData('balanceOf', [accountAddress.hex]),
+              ]),
+            ]),
+          },
+          networkRpcSuffixMap[networkType],
+        ])
+        .then((raw) => Array.from<string>(multicallInterface.decodeFunctionResult('aggregate', raw)[1]))
+    : Promise.resolve<string[]>([]);
 
-  const assetsWithIndex = assets.map((asset, index) => ({ ...asset, index }));
-  const nativeAssetIndex = assets.findIndex(({ assetType }) => assetType === AssetType.Native);
-  const contractAssets = nativeAssetIndex === -1 ? assetsWithIndex : assetsWithIndex.filter((asset) => asset.assetType !== AssetType.Native);
-
-  let promiseNative: Promise<string> | undefined;
-  if (nativeAssetIndex !== -1) {
-    promiseNative = fetchNativeAssetBalance({ networkType, endpoint, accountAddress });
-  }
-
-  let promiseContracts: Promise<Array<string>> | undefined;
-  if (contractAssets.length !== 0) {
-    promiseContracts = fetchChainMulticall({
-      key,
-      url: endpoint,
-      method: `${rpcPrefix}_call`,
-      multicallContractAddress,
-      data: contractAssets.map(({ contractAddress }) => ({
-        contractAddress: contractAddress!,
-        encodedData: `0x70a08231000000000000000000000000${accountAddress.hex.slice(2)}`,
-      })),
-    });
-  }
-
-  return Promise.all([promiseNative, promiseContracts]).then(([nativeAssetBalance, contractAssetsBalance]) => {
-    const result: Array<string> = Array.from({ length: assets.length });
-    if (nativeAssetBalance) {
-      assetsWithIndex.forEach(({ assetType, index }) => {
-        if (assetType === AssetType.Native) {
-          result[index] = nativeAssetBalance;
-        }
-      });
-    }
-
-    if (contractAssetsBalance) {
-      contractAssets?.forEach(({ index }) => {
-        result[index] = contractAssetsBalance[index];
-      });
-    }
-
-    return result;
-  });
+  const [native, contracts] = await Promise.all([nativeBalance, contractBalances]);
+  let contractIndex = 0;
+  return assets.map(({ assetType }) => (assetType === AssetType.Native ? native! : contracts[contractIndex++]));
 };
 
-export const fetchERC20ContractAssetInfo = async ({
-  networkType,
-  endpoint,
-  contractAddress,
-}: {
-  networkType: NetworkType;
-  endpoint: string;
-  contractAddress: string;
-}) => {
-  const rpcPrefix = networkRpcPrefixMap[networkType];
-  const rpcSuffix = networkRpcSuffixMap[networkType];
+const decodeTokenInfo = (results: readonly string[]) => ({
+  name: String(erc20Interface.decodeFunctionResult('name', results[0])[0]),
+  symbol: String(erc20Interface.decodeFunctionResult('symbol', results[1])[0]),
+  decimals: Number(erc20Interface.decodeFunctionResult('decimals', results[2])[0]),
+});
 
-  const contract = createERC20Contract(contractAddress);
-  const promiseRes = await Promise.all([
-    fetchChain<string>({
-      url: endpoint,
-      method: `${rpcPrefix}_call`,
-      params: [{ to: contractAddress, data: contract.encodeFunctionData('name', []) }, rpcSuffix],
-    }),
-    fetchChain<string>({
-      url: endpoint,
-      method: `${rpcPrefix}_call`,
-      params: [{ to: contractAddress, data: contract.encodeFunctionData('symbol', []) }, rpcSuffix],
-    }),
-    fetchChain<string>({
-      url: endpoint,
-      method: `${rpcPrefix}_call`,
-      params: [{ to: contractAddress, data: contract.encodeFunctionData('decimals', []) }, rpcSuffix],
-    }),
-  ]);
-
-  return {
-    name: contract.decodeFunctionResult('name', promiseRes[0])?.[0],
-    symbol: contract.decodeFunctionResult('symbol', promiseRes[1])?.[0],
-    decimals: contract.decodeFunctionResult('decimals', promiseRes[2])?.[0],
-  };
+export const fetchERC20ContractAssetInfo = async ({ networkType, endpoint, contractAddress }: TokenInfoParams) => {
+  const rpc = new HttpJsonRpcClient(endpoint);
+  const results = await Promise.all(
+    ['name', 'symbol', 'decimals'].map((method) =>
+      rpc.request<string>(`${networkRpcPrefixMap[networkType]}_call`, [
+        { to: contractAddress, data: erc20Interface.encodeFunctionData(method, []) },
+        networkRpcSuffixMap[networkType],
+      ]),
+    ),
+  );
+  return decodeTokenInfo(results);
 };
 
-export const fetchERC20AssetInfoBatch = async ({
-  networkType,
-  endpoint,
-  contractAddress,
-}: {
-  networkType: NetworkType;
-  endpoint: string;
-  contractAddress: string;
-}) => {
-  const rpcPrefix = networkRpcPrefixMap[networkType];
-  const rpcSuffix = networkRpcSuffixMap[networkType];
-
-  const contract = createERC20Contract(contractAddress);
-
-  const promiseRes = await fetchChainBatch<[string, string, string]>({
-    url: endpoint,
-    rpcs: [
-      {
-        method: `${rpcPrefix}_call`,
-        params: [{ to: contractAddress, data: contract.encodeFunctionData('name', []) }, rpcSuffix],
-      },
-      {
-        method: `${rpcPrefix}_call`,
-        params: [{ to: contractAddress, data: contract.encodeFunctionData('symbol', []) }, rpcSuffix],
-      },
-      {
-        method: `${rpcPrefix}_call`,
-        params: [{ to: contractAddress, data: contract.encodeFunctionData('decimals', []) }, rpcSuffix],
-      },
-    ],
-  });
-
-  return {
-    name: contract.decodeFunctionResult('name', promiseRes[0])?.[0],
-    symbol: contract.decodeFunctionResult('symbol', promiseRes[1])?.[0],
-    decimals: contract.decodeFunctionResult('decimals', promiseRes[2])?.[0],
-  };
+export const fetchERC20AssetInfoBatch = async ({ networkType, endpoint, contractAddress }: TokenInfoParams) => {
+  const results = await new HttpJsonRpcClient(endpoint).batch<string>(
+    ['name', 'symbol', 'decimals'].map((method) => ({
+      method: `${networkRpcPrefixMap[networkType]}_call`,
+      params: [{ to: contractAddress, data: erc20Interface.encodeFunctionData(method, []) }, networkRpcSuffixMap[networkType]],
+    })),
+  );
+  return decodeTokenInfo(results);
 };
 
-export const fetchERC20AssetInfoMulticall = async ({
-  networkType,
-  endpoint,
-  contractAddress,
-  multicallContractAddress,
-}: {
-  networkType: NetworkType;
-  endpoint: string;
-  contractAddress: string;
-  multicallContractAddress: string;
-}) => {
-  const rpcPrefix = networkRpcPrefixMap[networkType];
-
-  const contract = createERC20Contract(contractAddress);
-
-  return fetchChainMulticall({
-    url: endpoint,
-    multicallContractAddress,
-    method: `${rpcPrefix}_call`,
-    data: {
-      name: {
-        contractAddress,
-        encodedData: contract.encodeFunctionData('name', []),
-        decodeFunc: (res) => contract.decodeFunctionResult('name', res),
-      },
-      symbol: {
-        contractAddress,
-        encodedData: contract.encodeFunctionData('symbol', []),
-        decodeFunc: (res) => contract.decodeFunctionResult('symbol', res),
-      },
-      decimal: {
-        contractAddress,
-        encodedData: contract.encodeFunctionData('decimals', []),
-        decodeFunc: (res) => contract.decodeFunctionResult('decimals', res),
-      },
-    },
-  });
-};
-
-export const fetchERC20ContractAssetsInfo = async ({ networkType, endpoint, assets }: { networkType: NetworkType; endpoint: string; assets: Array<string> }) =>
+export const fetchERC20ContractAssetsInfo = ({ networkType, endpoint, assets }: TokensInfoParams) =>
   Promise.all(assets.map((contractAddress) => fetchERC20ContractAssetInfo({ networkType, endpoint, contractAddress })));
 
-export const fetchERC20AssetsInfoBatch = async ({ networkType, endpoint, assets }: { networkType: NetworkType; endpoint: string; assets: Array<string> }) => {
-  const rpcPrefix = networkRpcPrefixMap[networkType];
-  const rpcSuffix = networkRpcSuffixMap[networkType];
-
-  return fetchChainBatch<Array<string>>({
-    url: endpoint,
-    rpcs: assets.flatMap((contractAddress) => {
-      const contract = createERC20Contract(contractAddress);
-      return [
-        {
-          method: `${rpcPrefix}_call`,
-          params: [{ to: contractAddress, data: contract.encodeFunctionData('name', []) }, rpcSuffix],
-        },
-        {
-          method: `${rpcPrefix}_call`,
-          params: [{ to: contractAddress, data: contract.encodeFunctionData('symbol', []) }, rpcSuffix],
-        },
-        {
-          method: `${rpcPrefix}_call`,
-          params: [{ to: contractAddress, data: contract.encodeFunctionData('decimals', []) }, rpcSuffix],
-        },
-      ];
-    }),
-  }).then((res) => {
-    const result: Array<{ name: string; symbol: string; decimals: number }> = [];
-    for (let i = 0; i < res.length; i += 3) {
-      result.push({
-        name: createERC20Contract(assets[i / 3]).decodeFunctionResult('name', res[i])?.[0],
-        symbol: createERC20Contract(assets[i / 3]).decodeFunctionResult('symbol', res[i + 1])?.[0],
-        decimals: createERC20Contract(assets[i / 3]).decodeFunctionResult('decimals', res[i + 2])?.[0],
-      });
-    }
-    return result;
-  });
+export const fetchERC20AssetsInfoBatch = async ({ networkType, endpoint, assets }: TokensInfoParams) => {
+  const results = await new HttpJsonRpcClient(endpoint).batch<string>(
+    assets.flatMap((contractAddress) =>
+      ['name', 'symbol', 'decimals'].map((method) => ({
+        method: `${networkRpcPrefixMap[networkType]}_call`,
+        params: [{ to: contractAddress, data: erc20Interface.encodeFunctionData(method, []) }, networkRpcSuffixMap[networkType]],
+      })),
+    ),
+  );
+  return assets.map((_, index) => decodeTokenInfo(results.slice(index * 3, index * 3 + 3)));
 };
 
 export const fetchERC20AssetsInfoMulticall = async ({
@@ -363,100 +152,23 @@ export const fetchERC20AssetsInfoMulticall = async ({
   endpoint,
   assets,
   multicallContractAddress,
-}: {
-  networkType: NetworkType;
-  endpoint: string;
-  assets: Array<string>;
-  multicallContractAddress: string;
-}) => {
-  const rpcPrefix = networkRpcPrefixMap[networkType];
-
-  return fetchChainMulticall({
-    url: endpoint,
-    multicallContractAddress,
-    method: `${rpcPrefix}_call`,
-    data: assets.flatMap((contractAddress) => {
-      const contract = createERC20Contract(contractAddress);
-      return [
-        {
-          contractAddress,
-          encodedData: contract.encodeFunctionData('name', []),
-          decodeFunc: (res: string) => contract.decodeFunctionResult('name', res),
-        },
-        {
-          contractAddress,
-          encodedData: contract.encodeFunctionData('symbol', []),
-          decodeFunc: (res: string) => contract.decodeFunctionResult('symbol', res),
-        },
-        {
-          contractAddress,
-          encodedData: contract.encodeFunctionData('decimals', []),
-          decodeFunc: (res: string) => contract.decodeFunctionResult('decimals', res),
-        },
-      ];
-    }),
-  }).then((res) => {
-    const result: Array<{ name: string; symbol: string; decimals: number }> = [];
-    for (let i = 0; i < res.length; i += 3) {
-      result.push({
-        name: res[i] as string,
-        symbol: res[i + 1] as string,
-        decimals: res[i + 2] as number,
-      });
-    }
-    return result;
-  });
+}: TokensInfoParams & { multicallContractAddress: string }) => {
+  if (assets.length === 0) return [];
+  const calls = assets.flatMap((contractAddress) =>
+    ['name', 'symbol', 'decimals'].map((method) => [
+      networkType === NetworkType.Conflux ? base32AddressToHex({ address: contractAddress as Base32Address }) : contractAddress,
+      erc20Interface.encodeFunctionData(method, []),
+    ]),
+  );
+  const raw = await new HttpJsonRpcClient(endpoint).request<string>(`${networkRpcPrefixMap[networkType]}_call`, [
+    { to: multicallContractAddress, data: multicallInterface.encodeFunctionData('aggregate', [calls]) },
+    networkRpcSuffixMap[networkType],
+  ]);
+  const results = Array.from<string>(multicallInterface.decodeFunctionResult('aggregate', raw)[1]);
+  return assets.map((_, index) => decodeTokenInfo(results.slice(index * 3, index * 3 + 3)));
 };
 
-export const fetchERC20AssetInfoBatchWithAccount = async ({
-  networkType,
-  endpoint,
-  contractAddress,
-  accountAddress,
-}: {
-  networkType: NetworkType;
-  endpoint: string;
-  contractAddress: string;
-  accountAddress: Address;
-}) => {
-  const rpcPrefix = networkRpcPrefixMap[networkType];
-  const rpcSuffix = networkRpcSuffixMap[networkType];
-  const contract = createERC20Contract(contractAddress);
-
-  return fetchChainBatch<Array<string>>({
-    url: endpoint,
-    rpcs: [
-      {
-        method: `${rpcPrefix}_call`,
-        params: [{ to: contractAddress, data: contract.encodeFunctionData('name', []) }, rpcSuffix],
-      },
-      {
-        method: `${rpcPrefix}_call`,
-        params: [{ to: contractAddress, data: contract.encodeFunctionData('symbol', []) }, rpcSuffix],
-      },
-      {
-        method: `${rpcPrefix}_call`,
-        params: [{ to: contractAddress, data: contract.encodeFunctionData('decimals', []) }, rpcSuffix],
-      },
-      {
-        method: `${rpcPrefix}_call`,
-        params: [
-          {
-            to: contractAddress,
-            data: contract.encodeFunctionData('balanceOf', [
-              (networkType === NetworkType.Conflux ? convertBase32ToHex(accountAddress.base32 as Base32Address) : accountAddress.hex) as `0x${string}`,
-            ]),
-          },
-          rpcSuffix,
-        ],
-      },
-    ],
-  }).then((res) => {
-    return {
-      name: typeof res[0] === 'string' && res[0].startsWith('0x') ? contract.decodeFunctionResult('name', res[0])?.[0] : '',
-      symbol: typeof res[1] === 'string' && res[1].startsWith('0x') ? contract.decodeFunctionResult('symbol', res[1])?.[0] : '',
-      decimals: typeof res[2] === 'string' && res[2].startsWith('0x') ? Number(contract.decodeFunctionResult('decimals', res[2])?.[0]) : 0,
-      balance: typeof res[3] === 'string' && res[3].startsWith('0x') ? contract.decodeFunctionResult('balanceOf', res[3])?.[0].toString() : '0',
-    };
-  });
+export const fetchERC20AssetInfoMulticall = async ({ contractAddress, ...params }: TokenInfoParams & { multicallContractAddress: string }) => {
+  const [info] = await fetchERC20AssetsInfoMulticall({ ...params, assets: [contractAddress] });
+  return { name: info.name, symbol: info.symbol, decimal: info.decimals };
 };

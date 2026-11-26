@@ -1,4 +1,4 @@
-import { zeroAddress } from '@core/utils/address';
+import { ZeroAddress } from 'ethers';
 import { memoize } from 'lodash-es';
 
 /* eslint-disable no-bitwise */
@@ -364,7 +364,7 @@ class Blockies {
 }
 
 function _toDataUrl(_address: string | null | undefined) {
-  const address = _address || zeroAddress;
+  const address = _address || ZeroAddress;
   const cache = Blockies.cache[address];
   if (address && cache) {
     return cache;

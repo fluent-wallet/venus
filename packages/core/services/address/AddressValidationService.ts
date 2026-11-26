@@ -2,8 +2,10 @@ import { ChainRegistry } from '@core/chains';
 import { CHAIN_PROVIDER_NOT_FOUND, CoreError } from '@core/errors';
 import type { ChainType } from '@core/types';
 import { NetworkType } from '@core/types';
-import { type Base32Address, convertBase32ToHex, validateCfxAddress, validateHexAddress } from '@core/utils/address';
+import type { Address as Base32Address } from 'cive';
+import { decodeBase32Address, isAddress } from 'cive/utils';
 import { inject, injectable } from 'inversify';
+import { validate as isHexAddress } from 'ox/Address';
 
 @injectable()
 export class AddressValidationService {
@@ -16,9 +18,9 @@ export class AddressValidationService {
 
     switch (networkType) {
       case NetworkType.Conflux:
-        return validateCfxAddress(addressValue);
+        return isAddress(addressValue);
       case NetworkType.Ethereum:
-        return validateHexAddress(addressValue);
+        return isHexAddress(addressValue, { strict: false });
       default:
         return false;
     }
@@ -30,8 +32,7 @@ export class AddressValidationService {
 
     if (networkType === NetworkType.Conflux) {
       try {
-        const hex = convertBase32ToHex(addressValue as Base32Address);
-        return hex.startsWith('0x8');
+        return decodeBase32Address({ address: addressValue as Base32Address }).type === 'contract';
       } catch {
         return false;
       }

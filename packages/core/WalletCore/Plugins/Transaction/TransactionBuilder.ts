@@ -1,7 +1,8 @@
-import { createERC20Contract, createERC721Contract, createERC1155Contract } from '@cfx-kit/dapp-utils/dist/contract';
+import { iface721, iface777, iface1155 } from '@core/contracts';
 import { AssetType } from '@core/database/models/Asset';
 import { type Network, NetworkType } from '@core/database/models/Network';
-import { type Base32Address, convertBase32ToHex } from '@core/utils/address';
+import type { Address as Base32Address } from 'cive';
+import { base32AddressToHex } from 'cive/utils';
 import Decimal from 'decimal.js';
 import type { AssetInfo } from '../AssetsTracker/types';
 import type { ITxEvm } from './types';
@@ -40,12 +41,11 @@ const buildERC20Transfer = (params: TransactionBuildParams): ITxEvm => {
     throw new Error('ERC20 asset must have a contract address');
   }
 
-  const contract = createERC20Contract(asset.contractAddress);
   const transferAmountHex = convertAmountToHex(amount, asset.decimals || 18);
 
-  const to = currentNetwork.networkType === NetworkType.Conflux ? convertBase32ToHex(recipientAddress as Base32Address) : recipientAddress;
+  const to = currentNetwork.networkType === NetworkType.Conflux ? base32AddressToHex({ address: recipientAddress as Base32Address }) : recipientAddress;
 
-  const data = contract.encodeFunctionData('transfer', [to as `0x${string}`, transferAmountHex as unknown as bigint]);
+  const data = iface777.encodeFunctionData('transfer', [to, transferAmountHex]);
 
   return {
     from: currentAddressValue,
@@ -67,13 +67,10 @@ const buildERC721Transfer = (params: TransactionBuildParams): ITxEvm => {
     throw new Error('ERC721 transfer requires a token ID');
   }
 
-  const contract = createERC721Contract(asset.contractAddress);
+  const from = currentNetwork.networkType === NetworkType.Conflux ? base32AddressToHex({ address: currentAddressValue as Base32Address }) : currentAddressValue;
+  const to = currentNetwork.networkType === NetworkType.Conflux ? base32AddressToHex({ address: recipientAddress as Base32Address }) : recipientAddress;
 
-  const data = contract.encodeFunctionData('transferFrom', [
-    currentAddressValue as `0x${string}`,
-    recipientAddress as `0x${string}`,
-    nftTokenId as unknown as bigint,
-  ]);
+  const data = iface721.encodeFunctionData('transferFrom', [from, to, nftTokenId]);
 
   return {
     from: currentAddressValue,
@@ -95,16 +92,11 @@ const buildERC1155Transfer = (params: TransactionBuildParams): ITxEvm => {
     throw new Error('ERC1155 transfer requires a token ID');
   }
 
-  const contract = createERC1155Contract(asset.contractAddress);
+  const from = currentNetwork.networkType === NetworkType.Conflux ? base32AddressToHex({ address: currentAddressValue as Base32Address }) : currentAddressValue;
+  const to = currentNetwork.networkType === NetworkType.Conflux ? base32AddressToHex({ address: recipientAddress as Base32Address }) : recipientAddress;
   const transferAmountHex = convertAmountToHex(amount, 0);
 
-  const data = contract.encodeFunctionData('safeTransferFrom', [
-    currentAddressValue as `0x${string}`,
-    recipientAddress as `0x${string}`,
-    nftTokenId as unknown as bigint,
-    transferAmountHex as unknown as bigint,
-    '0x',
-  ]);
+  const data = iface1155.encodeFunctionData('safeTransferFrom', [from, to, nftTokenId, transferAmountHex, '0x']);
 
   return {
     from: currentAddressValue,

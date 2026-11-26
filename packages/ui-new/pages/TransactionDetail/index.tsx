@@ -2,11 +2,9 @@ import Copy from '@assets/icons/copy.svg';
 import Earth from '@assets/icons/earth.svg';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import SuccessIcon from '@assets/icons/success.svg';
-import { truncate } from '@cfx-kit/dapp-utils/dist/address';
 import Spinner from '@components/Spinner';
 import Text from '@components/Text';
 import { SPEED_UP_ACTION } from '@core/types';
-import { shortenAddress } from '@core/utils/address';
 import { useShowSpeedUp } from '@hooks/useShowSpeedUp';
 import SpeedUpButton from '@modules/SpeedUpButton';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -21,6 +19,7 @@ import {
   type TransactionDetailBadgeStatus,
   type TransactionDetailLabelStatus,
 } from '@service/transactionStatus';
+import { shortenAddress, truncate } from '@utils/address';
 import { toDataUrl } from '@utils/blockies';
 import { ACTIVITY_DEV_INFO_FEATURE } from '@utils/features';
 import dayjs from 'dayjs';

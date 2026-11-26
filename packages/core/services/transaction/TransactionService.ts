@@ -61,8 +61,8 @@ import {
 import { Networks } from '@core/utils/consts';
 import { ProcessErrorType } from '@core/utils/eth';
 import { type ParseTxDataReturnType, parseTxData } from '@core/utils/txData';
-import { Interface } from '@ethersproject/abi';
 import { Q } from '@nozbe/watermelondb';
+import { Interface } from 'ethers';
 import { inject, injectable, optional } from 'inversify';
 import * as OxHex from 'ox/Hex';
 import * as OxValue from 'ox/Value';

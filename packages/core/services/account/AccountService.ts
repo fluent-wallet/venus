@@ -11,11 +11,11 @@ import type { AuthService } from '@core/modules/auth';
 import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { NetworkType } from '@core/types';
 import type { CryptoTool } from '@core/types/crypto';
-import { toChecksum } from '@core/utils/account';
-import { convertHexToBase32 } from '@core/utils/address';
+import { toAccountAddress, toChecksum } from '@core/utils/account';
 import { getNthAccountOfHDKey } from '@core/utils/hdkey';
 import { Q } from '@nozbe/watermelondb';
 import type { ReaderInterface } from '@nozbe/watermelondb/Database/WorkQueue';
+import { hexAddressToBase32 } from 'cive/utils';
 import { inject, injectable, optional } from 'inversify';
 import { HardwareWalletService } from '../hardware/HardwareWalletService';
 import { getGroupedAccountNickname } from './naming';
@@ -484,7 +484,10 @@ export class AccountService {
           record.network.set(network);
           record.assetRule.set(assetRule);
           record.hex = checksum;
-          record.base32 = network.networkType === NetworkType.Conflux ? convertHexToBase32(checksum, network.netId) : checksum;
+          record.base32 =
+            network.networkType === NetworkType.Conflux
+              ? hexAddressToBase32({ hexAddress: toAccountAddress(checksum) as `0x${string}`, networkId: network.netId })
+              : checksum;
         });
       }),
     );

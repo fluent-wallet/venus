@@ -7,8 +7,7 @@ import Text from '@components/Text';
 import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
 import { BSIM_MANAGEMENT_ACCOUNT_LIMIT } from '@core/hardware/bsim/constants';
 import { NetworkType } from '@core/types';
-import { toChecksum } from '@core/utils/account';
-import { convertHexToBase32, shortenAddress } from '@core/utils/address';
+import { toAccountAddress, toChecksum } from '@core/utils/account';
 import { getNthAccountOfHDKey } from '@core/utils/hdkey';
 import { useTheme } from '@react-navigation/native';
 import type { HDSettingStackName, StackScreenProps } from '@router/configs';
@@ -16,9 +15,11 @@ import { useAccountsOfGroup, useApplyGroupVisibleIndexes } from '@service/accoun
 import { useAccountGroup } from '@service/accountGroup';
 import { getAuthService, getHardwareWalletService, getVaultService, VaultType } from '@service/core';
 import { useCurrentHdPath, useCurrentNetwork } from '@service/network';
+import { shortenAddress } from '@utils/address';
 import { isSmallDevice } from '@utils/deviceInfo';
 import { getErrorCode } from '@utils/error';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
+import { hexAddressToBase32 } from 'cive/utils';
 import { debounce } from 'lodash-es';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -30,7 +31,9 @@ const defaultPages = Array.from({ length: countPerPage }).map((_, index) => ({ a
 
 function convertHexToNetworkAddress(params: { hex: string; networkType: NetworkType; netId: number }): string {
   const checksum = toChecksum(params.hex);
-  return params.networkType === NetworkType.Conflux ? convertHexToBase32(checksum, params.netId) : checksum;
+  return params.networkType === NetworkType.Conflux
+    ? hexAddressToBase32({ hexAddress: toAccountAddress(checksum) as `0x${string}`, networkId: params.netId })
+    : checksum;
 }
 
 const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ navigation, route }) => {

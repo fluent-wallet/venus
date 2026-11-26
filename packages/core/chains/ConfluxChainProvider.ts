@@ -17,10 +17,10 @@ import type {
   SignedTransaction,
   TransactionParams,
 } from '@core/types';
-import { computeAddress, toAccountAddress } from '@core/utils/account';
-import { type Base32Address, convertBase32ToHex, convertHexToBase32, decode } from '@core/utils/address';
 import { NetworkType } from '@core/utils/consts';
-import { Conflux, PersonalMessage, PrivateKeyAccount } from 'js-conflux-sdk';
+import type { Address as Base32Address } from 'cive';
+import { signMessage as signConfluxMessage, signTransaction as signConfluxTransaction } from 'cive/accounts';
+import { base32AddressToHex, decodeBase32Address, isAddress, keccak256, publicKeyToAddress, verifyMessage as verifyConfluxMessage } from 'cive/utils';
 import type { Hex } from 'ox/Hex';
 import type { EndpointManager } from './EndpointManager';
 import { buildTransactionPayload } from './utils/transactionBuilder';
@@ -33,32 +33,10 @@ export interface ConfluxChainProviderOptions {
   endpointManager: EndpointManager;
 }
 
-type ConfluxRpcClient = {
-  getBalance(address: string, epochNumber?: string | number): Promise<bigint>;
-  getNextNonce(address: string, epochNumber?: string | number): Promise<bigint>;
-  getEpochNumber(epochNumber?: string | number): Promise<number>;
-  estimateGasAndCollateral(
-    params: { from: string; to?: string; data?: string; value?: string },
-    epochNumber?: string | number,
-  ): Promise<{
-    gasUsed: bigint;
-    gasLimit: bigint;
-    storageCollateralized: bigint;
-  }>;
-  getGasPrice(): Promise<bigint>;
-};
-
 export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTransaction, ConfluxFeeEstimate> {
   readonly chainId: string;
   readonly networkType = NetworkType.Conflux;
   readonly netId: number;
-
-  private readonly endpointManager: EndpointManager;
-  private readonly networkId: string;
-
-  private cachedEndpoint: string | null = null;
-  private cachedCfx: Conflux | null = null;
-  private cachedSdkRpc: ConfluxRpcClient | null = null;
 
   readonly rpc: IChainRpc;
 
@@ -66,41 +44,16 @@ export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTrans
     this.chainId = chainId;
     this.netId = netId;
 
-    this.networkId = networkId;
-    this.endpointManager = endpointManager;
-
     this.rpc = new DynamicHttpJsonRpcClient({ endpointManager, networkId });
   }
 
-  private getConfluxClients(): { cfx: Conflux; sdkRpc: ConfluxRpcClient } {
-    const endpoint = this.endpointManager.getEndpointOrThrow(this.networkId);
-
-    if (this.cachedCfx && this.cachedSdkRpc && this.cachedEndpoint === endpoint) {
-      return { cfx: this.cachedCfx, sdkRpc: this.cachedSdkRpc };
-    }
-
-    const cfx = new Conflux({ url: endpoint, networkId: this.netId });
-    const sdkRpc = cfx.cfx as ConfluxRpcClient;
-
-    this.cachedEndpoint = endpoint;
-    this.cachedCfx = cfx;
-    this.cachedSdkRpc = sdkRpc;
-
-    return { cfx, sdkRpc };
-  }
-
   deriveAddress(publicKey: Hex): string {
-    const accountHex = toAccountAddress(computeAddress(publicKey));
-    return convertHexToBase32(accountHex, this.netId);
+    return publicKeyToAddress({ publicKey, networkId: this.netId });
   }
 
   validateAddress(address: Address): boolean {
     try {
-      const decoded = decode(address);
-      if (decoded.netId !== this.netId) {
-        throw new Error(`Address netId ${decoded.netId} does not match provider netId ${this.netId}`);
-      }
-      return true;
+      return decodeBase32Address({ address: address as Base32Address }).networkId === this.netId;
     } catch {
       return false;
     }
@@ -136,18 +89,19 @@ export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTrans
 
   async estimateFee(tx: ConfluxUnsignedTransaction): Promise<ConfluxFeeEstimate> {
     const { payload } = tx;
-    const { sdkRpc } = this.getConfluxClients();
+    const { gasUsed, storageCollateralized } = await this.rpc.request<{ gasUsed: Hex; storageCollateralized: Hex }>('cfx_estimateGasAndCollateral', [
+      {
+        from: payload.from,
+        to: payload.to,
+        data: payload.data,
+        value: payload.value,
+      },
+      'latest_state',
+    ]);
 
-    const { gasUsed, storageCollateralized } = await sdkRpc.estimateGasAndCollateral({
-      from: payload.from,
-      to: payload.to,
-      data: payload.data,
-      value: payload.value,
-    });
+    const gasPrice = payload.gasPrice ? BigInt(payload.gasPrice) : BigInt(await this.rpc.request<Hex>('cfx_gasPrice', []));
 
-    const gasPrice = payload.gasPrice ? BigInt(payload.gasPrice) : await sdkRpc.getGasPrice();
-
-    return this.toFeeEstimate(payload, this.toBigInt(gasUsed), this.toBigInt(storageCollateralized), this.toBigInt(gasPrice));
+    return this.toFeeEstimate(payload, BigInt(gasUsed), BigInt(storageCollateralized), gasPrice);
   }
   async signTransaction(tx: ConfluxUnsignedTransaction, signer: ISigner): Promise<SignedTransaction<NetworkType.Conflux>> {
     if (signer.type === 'software') {
@@ -158,17 +112,31 @@ export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTrans
   }
 
   private async signWithSoftware(tx: ConfluxUnsignedTransaction, signer: ISoftwareSigner): Promise<SignedTransaction<NetworkType.Conflux>> {
-    const privateKey = signer.getPrivateKey();
-    const account = new PrivateKeyAccount(privateKey, this.netId);
-    const signed = await account.signTransaction({
-      ...tx.payload,
-      gas: tx.payload.gasLimit,
+    const { payload } = tx;
+    const { gasLimit, gasPrice, storageLimit, nonce, epochHeight } = payload;
+    if (gasLimit == null || gasPrice == null || storageLimit == null || nonce == null || epochHeight == null) {
+      throw new Error('Conflux transaction must be prepared before signing.');
+    }
+
+    const rawTransaction = await signConfluxTransaction({
+      privateKey: signer.getPrivateKey() as Hex,
+      transaction: {
+        chainId: Number(payload.chainId),
+        nonce,
+        epochHeight: BigInt(epochHeight),
+        gas: BigInt(gasLimit),
+        gasPrice: BigInt(gasPrice),
+        storageLimit: BigInt(storageLimit),
+        to: payload.to as Base32Address | undefined,
+        value: BigInt(payload.value),
+        data: payload.data,
+      },
     });
 
     return {
       chainType: tx.chainType,
-      rawTransaction: signed.serialize(),
-      hash: signed.hash ?? '',
+      rawTransaction,
+      hash: keccak256(rawTransaction),
     };
   }
 
@@ -192,25 +160,19 @@ export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTrans
   }
 
   async broadcastTransaction(signedTx: SignedTransaction): Promise<Hash> {
-    const { cfx } = this.getConfluxClients();
-    return cfx.sendRawTransaction(signedTx.rawTransaction);
+    return this.rpc.request<Hash>('cfx_sendRawTransaction', [signedTx.rawTransaction]);
   }
   async getBalance(address: Address): Promise<Hex> {
-    const { sdkRpc } = this.getConfluxClients();
-    const raw = await sdkRpc.getBalance(address, 'latest_state');
-    return this.formatHex(raw);
+    return this.rpc.request<Hex>('cfx_getBalance', [address, 'latest_state']);
   }
   async getNonce(address: Address): Promise<number> {
-    const { sdkRpc } = this.getConfluxClients();
-    const result = await sdkRpc.getNextNonce(address, 'latest_state');
-    return this.toNumber(result);
+    const result = await this.rpc.request<Hex>('cfx_getNextNonce', [address, 'latest_state']);
+    return Number(BigInt(result));
   }
 
   async call(params: ChainCallParams): Promise<Hex> {
-    const { cfx } = this.getConfluxClients();
     const { to, data } = params;
-    const result = await cfx.call({ to, data });
-    return this.formatHex(result);
+    return this.rpc.request<Hex>('cfx_call', [{ to, data }, 'latest_state']);
   }
 
   async batchCall(params: readonly ChainCallParams[]): Promise<Hex[]> {
@@ -298,8 +260,11 @@ export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTrans
 
   async signMessage(message: string, signer: ISigner): Promise<string> {
     if (signer.type === 'software') {
-      const privateKey = signer.getPrivateKey();
-      return PersonalMessage.sign(privateKey, message);
+      const isHexBytes = message.length % 2 === 0 && /^0x[0-9a-fA-F]*$/.test(message);
+      return signConfluxMessage({
+        privateKey: signer.getPrivateKey() as Hex,
+        message: isHexBytes ? { raw: message as Hex } : message,
+      });
     } else {
       await signer.signWithHardware({
         derivationPath: signer.getDerivationPath(),
@@ -316,15 +281,17 @@ export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTrans
     }
   }
 
-  verifyMessage(message: string, signature: string, address: Address): boolean {
+  async verifyMessage(message: string, signature: string, address: Address): Promise<boolean> {
     try {
-      const decoded = decode(address);
-      if (decoded.netId !== this.netId) return false;
-      const recoveredPubKey = PersonalMessage.recover(signature, message);
-      const recoveredHex = toAccountAddress(computeAddress(recoveredPubKey));
-      const expectedHex = toAccountAddress(convertBase32ToHex(address as Base32Address));
+      const decoded = decodeBase32Address({ address: address as Base32Address });
+      if (decoded.networkId !== this.netId) return false;
+      const isHexBytes = message.length % 2 === 0 && /^0x[0-9a-fA-F]*$/.test(message);
 
-      return recoveredHex.toLowerCase() === expectedHex.toLowerCase();
+      return await verifyConfluxMessage({
+        address: address as Base32Address,
+        message: isHexBytes ? { raw: message as Hex } : message,
+        signature: signature as Hex,
+      });
     } catch {
       return false;
     }
@@ -337,16 +304,12 @@ export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTrans
 
   private async resolveEpochHeight(override?: number): Promise<number> {
     if (typeof override === 'number') return override;
-    const { sdkRpc } = this.getConfluxClients();
-    const epoch = await sdkRpc.getEpochNumber('latest_state');
-    return this.toNumber(epoch);
+    const epoch = await this.rpc.request<Hex>('cfx_epochNumber', ['latest_state']);
+    return Number(BigInt(epoch));
   }
 
   private resolveErc20BalanceAddress(address: Address): string {
-    if (address.startsWith('cfx') || address.startsWith('net')) {
-      return convertBase32ToHex(address as Base32Address);
-    }
-    return address;
+    return isAddress(address) ? base32AddressToHex({ address }) : address;
   }
 
   private async finalizePreparedTransaction(tx: ConfluxUnsignedTransaction): Promise<ConfluxUnsignedTransaction> {
@@ -386,37 +349,5 @@ export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTrans
       storageLimit: `0x${storageLimit.toString(16)}`,
       estimatedTotal: `0x${estimatedTotal.toString(16)}`,
     };
-  }
-
-  /**
-   * conflux sdk returns bigint is JSBI not native bigint so we need to format it
-   * @param value
-   * @returns
-   */
-  private formatHex(value: unknown): Hex {
-    const normalized = this.toBigInt(value);
-    return `0x${normalized.toString(16)}` as Hex;
-  }
-
-  private toBigInt(value: unknown): bigint {
-    if (typeof value === 'bigint') return value;
-    if (typeof value === 'number') return BigInt(value);
-    if (typeof value === 'string') return BigInt(value);
-    if (value && typeof (value as { toString(): string }).toString === 'function') {
-      return BigInt((value as { toString(): string }).toString());
-    }
-    throw new Error(`Unable to convert value '${String(value)}' to bigint`);
-  }
-
-  private toNumber(value: unknown): number {
-    if (typeof value === 'number') return value;
-    if (typeof value === 'bigint') return Number(value);
-    if (typeof value === 'string') {
-      return value.startsWith('0x') ? Number(BigInt(value)) : Number(value);
-    }
-    if (value && typeof (value as { toString(): string }).toString === 'function') {
-      return this.toNumber((value as { toString(): string }).toString());
-    }
-    throw new Error(`Unable to convert value '${String(value)}' to number`);
   }
 }

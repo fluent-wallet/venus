@@ -11,16 +11,6 @@ import { NonceUsedState, ReplacedResponse } from './types';
 
 export type UpdaterMap = Map<Tx, () => Tx>;
 
-export interface RPCErrorResponse {
-  message: string;
-  code: number;
-  data?: unknown;
-}
-
-export const isRPCError = (response: unknown): response is RPCErrorResponse => {
-  return typeof response === 'object' && !!response && 'code' in (response as RPCErrorResponse) && 'message' in (response as RPCErrorResponse);
-};
-
 export abstract class BaseTxTrack {
   _logPrefix: string;
 
@@ -245,7 +235,10 @@ export abstract class BaseTxTrack {
 
   abstract _checkStatus(txs: Tx[], network: Network, updaterMap: UpdaterMap): Promise<TxStatus | undefined>;
   abstract _precheckBeforeResend(tx: Tx): Promise<boolean>;
-  abstract _getTransactionReceipt(hash: string, endpoint: string): Promise<ETH.eth_getTransactionReceiptResponse | CFX.cfx_getTransactionReceiptResponse>;
+  abstract _getTransactionReceipt(
+    hash: string,
+    endpoint: string,
+  ): Promise<ETH.eth_getTransactionReceiptResponse | CFX.cfx_getTransactionReceiptResponse | null>;
   abstract _getNonce(
     address: string,
     endpoint: string,

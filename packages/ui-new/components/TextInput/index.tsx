@@ -1,10 +1,9 @@
 import Clear from '@assets/icons/clear.svg';
 import EyeClose from '@assets/icons/eye-close.svg';
 import EyeOpen from '@assets/icons/eye-open.svg';
-import composeRef from '@cfx-kit/react-utils/dist/composeRef';
 import { useTheme } from '@react-navigation/native';
 import { isDev } from '@utils/getEnv';
-import { type Component, forwardRef, isValidElement, useCallback, useEffect, useRef, useState } from 'react';
+import { type Component, forwardRef, isValidElement, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import {
   Keyboard,
   Platform,
@@ -61,6 +60,7 @@ const CustomTextInput = forwardRef<TextInputInstance, Props>(
     );
 
     const inputRef = useRef<TextInputInstance>(null!);
+    useImperativeHandle(_forwardRef, () => inputRef.current);
 
     const handlePressClear = useCallback(() => {
       inputRef.current?.clear?.();
@@ -77,7 +77,7 @@ const CustomTextInput = forwardRef<TextInputInstance, Props>(
     return (
       <View style={[styles.defaultContainerStyle, { backgroundColor: colors.bgSecondary }, containerStyle]}>
         <TextInput
-          ref={composeRef([inputRef, _forwardRef as any])}
+          ref={inputRef}
           style={[
             styles.defaultInputStyle,
             props.multiline && styles.defaultMultilineInputStyle,

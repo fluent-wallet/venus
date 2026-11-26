@@ -107,7 +107,7 @@ const stubProvider = (overrides: Partial<IChainProvider> & { chainId?: string; n
     getBalance: overrides.getBalance ?? (async () => '0x0'),
     getNonce: overrides.getNonce ?? (async () => 0),
     signMessage: overrides.signMessage ?? (async () => '0x'),
-    verifyMessage: overrides.verifyMessage ?? (() => true),
+    verifyMessage: overrides.verifyMessage ?? (async () => true),
     call: overrides.call ?? (async () => '0x'),
     batchCall: overrides.batchCall ?? (async () => []),
     readFungibleAssetBalances: overrides.readFungibleAssetBalances ?? (async (_address, requests) => requests.map(() => '0x0')),

@@ -8,6 +8,11 @@ const {
 } = require('react-native-reanimated/metro-config');
 const defaultConfig = getDefaultConfig(__dirname);
 const { assetExts, sourceExts } = defaultConfig.resolver;
+const aliases = {
+  crypto: 'react-native-quick-crypto',
+  stream: 'stream-browserify',
+  buffer: '@craftzdog/react-native-buffer',
+};
 
 /**
  * Metro configuration
@@ -26,6 +31,9 @@ const config1 = {
     babelTransformerPath: require.resolve('react-native-svg-transformer/expo'),
   },
   resolver: {
+    resolveRequest(context, moduleName, platform) {
+      return context.resolveRequest(context, aliases[moduleName] ?? moduleName, platform);
+    },
     assetExts: assetExts.filter((ext) => ext !== 'svg'),
     sourceExts: [...sourceExts, 'svg'],
   },

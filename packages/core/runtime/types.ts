@@ -2,7 +2,7 @@ import type { NetworkType } from '@core/utils/consts';
 import type { WalletKitTypes } from '@reown/walletkit';
 import type { Container } from 'inversify';
 
-export type TimerId = ReturnType<typeof globalThis.setTimeout>;
+export type TimerId = number | ReturnType<typeof globalThis.setTimeout>;
 
 export type RuntimeScheduler = {
   setTimeout: (handler: () => void, timeoutMs: number) => TimerId;

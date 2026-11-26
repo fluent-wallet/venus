@@ -3,7 +3,6 @@ import Button from '@components/Button';
 import Icon from '@components/Icon';
 import { SheetBody, SheetFooter, SheetHandle, SheetScrollView } from '@components/Sheet';
 import Text from '@components/Text';
-import { shortenAddress } from '@core/utils/address';
 import { NetworkType } from '@core/utils/consts';
 import useInAsync from '@hooks/useInAsync';
 import { useTheme } from '@react-navigation/native';
@@ -11,6 +10,7 @@ import { AccountSelectorStackName, type StackScreenProps, type WalletConnectProp
 import { useCurrentAccount } from '@service/account';
 import { getExternalRequestsService, getRuntimeConfig } from '@service/core';
 import { useNetworks } from '@service/network';
+import { shortenAddress } from '@utils/address';
 import { Image } from 'expo-image';
 import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';

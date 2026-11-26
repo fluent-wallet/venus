@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import { VaultType } from '@core/database/models/Vault/VaultType';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { ModuleManager } from '@core/runtime/ModuleManager';
-import type { RuntimeScheduler } from '@core/runtime/types';
+import type { RuntimeScheduler, TimerId } from '@core/runtime/types';
 import type { IAccount, INetwork } from '@core/services';
 import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } from '@core/testUtils/mocks';
 import { NetworkType } from '@core/types';
@@ -17,8 +17,8 @@ import { ServicesModule } from '../services';
 import { TxSyncModule } from './TxSyncModule';
 
 const createSchedulerStub = () => {
-  const timeouts = new Map<number, () => void>();
-  const intervals = new Map<number, () => void>();
+  const timeouts = new Map<TimerId, () => void>();
+  const intervals = new Map<TimerId, () => void>();
   let nextId = 1;
 
   const scheduler: RuntimeScheduler = {
@@ -43,7 +43,9 @@ const createSchedulerStub = () => {
   const flushTimeouts = () => {
     const pending = Array.from(timeouts.values());
     timeouts.clear();
-    pending.forEach((h) => h());
+    pending.forEach((h) => {
+      h();
+    });
   };
 
   return {

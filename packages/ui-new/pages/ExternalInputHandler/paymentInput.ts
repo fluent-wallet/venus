@@ -1,8 +1,8 @@
 import { NetworkType } from '@core/types';
-import { validateHexAddress } from '@core/utils/address';
 import type { INetwork } from '@service/core';
 import { type PaymentRequest, parsePaymentUri } from '@utils/payment-uri';
 import type { TFunction } from 'i18next';
+import { validate as isHexAddress } from 'ox/Address';
 import type { ParseResult, PaymentUriParseResult } from './types';
 
 export type PaymentInputContext = {
@@ -19,7 +19,7 @@ export function parsePaymentUriInput(raw: string, { currentNetwork, t }: Payment
   try {
     const input = raw.trim();
     // Bare EVM addresses have no URI prefix or payment details, so use the current network's native asset.
-    if (currentNetwork.networkType === NetworkType.Ethereum && validateHexAddress(input)) {
+    if (currentNetwork.networkType === NetworkType.Ethereum && isHexAddress(input, { strict: false })) {
       payment = {
         networkType: NetworkType.Ethereum,
         recipientAddress: input,

@@ -1,22 +1,13 @@
 import 'reflect-metadata';
 import { SoftwareSigner } from '@core/signers';
-import { createMockConfluxSdk, createMockEthersProvider, DEFAULT_BASE32_ADDRESS_TEST, DEFAULT_HEX_ADDRESS, DEFAULT_PRIVATE_KEY } from '@core/testUtils/mocks';
+import { createMockConfluxRpc, createMockEthersProvider, DEFAULT_BASE32_ADDRESS_TEST, DEFAULT_HEX_ADDRESS, DEFAULT_PRIVATE_KEY } from '@core/testUtils/mocks';
 import { AssetType, type ConfluxUnsignedTransaction, type EvmUnsignedTransaction, NetworkType } from '@core/types';
 import { computeAddress as computeAccountAddress, toAccountAddress } from '@core/utils/account';
-import { convertHexToBase32 } from '@core/utils/address';
 import { HDKey } from '@scure/bip32';
 import { mnemonicToSeedSync } from '@scure/bip39';
+import { hexAddressToBase32 } from 'cive/utils';
 import { ChainRegistry, ConfluxChainProvider, EthereumChainProvider } from '..';
 import { EndpointManager } from '../EndpointManager';
-
-jest.mock('js-conflux-sdk', () => {
-  const actual = jest.requireActual('js-conflux-sdk');
-  return {
-    ...actual,
-    Conflux: jest.fn(),
-    PrivateKeyAccount: jest.fn(),
-  };
-});
 
 jest.mock('ethers', () => {
   const actual = jest.requireActual('ethers');
@@ -27,7 +18,6 @@ jest.mock('ethers', () => {
   };
 });
 
-const { Conflux: MockedConflux, PrivateKeyAccount: MockedPrivateKeyAccount, PersonalMessage } = jest.requireMock('js-conflux-sdk');
 const { JsonRpcProvider: MockedJsonRpcProvider, Wallet: MockedWallet } = jest.requireMock('ethers');
 const actualEthers = jest.requireActual('ethers');
 
@@ -59,9 +49,8 @@ describe('chain integration', () => {
     manager.setEndpoint(ETHEREUM_NETWORK_ID, ETHEREUM_ENDPOINT);
     return manager;
   };
-  let confluxRpc: ReturnType<typeof createMockConfluxSdk>;
+  let confluxRpc: ReturnType<typeof createMockConfluxRpc>;
   let ethersProvider: ReturnType<typeof createMockEthersProvider>;
-  let confluxSignTransaction: jest.Mock;
   let ethereumSignTransaction: jest.Mock;
   let ethereumSignMessage: jest.Mock;
   let lastWalletArgs: unknown[] | null = null;
@@ -69,22 +58,8 @@ describe('chain integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    confluxRpc = createMockConfluxSdk();
+    confluxRpc = createMockConfluxRpc();
     ethersProvider = createMockEthersProvider();
-
-    MockedConflux.mockImplementation(() => ({
-      cfx: confluxRpc.rpc,
-      sendRawTransaction: confluxRpc.sdk.sendRawTransaction,
-    }));
-
-    confluxSignTransaction = jest.fn().mockResolvedValue({
-      serialize: () => '0xconflux-raw',
-      hash: '0xconflux-hash',
-    });
-
-    MockedPrivateKeyAccount.mockImplementation(() => ({
-      signTransaction: confluxSignTransaction,
-    }));
 
     MockedJsonRpcProvider.mockImplementation(() => ethersProvider.provider);
 
@@ -118,15 +93,10 @@ describe('chain integration', () => {
   it('runs full Conflux flow: build → estimate → sign → broadcast', async () => {
     const endpointManager = createEndpointManager();
     const provider = new ConfluxChainProvider({ ...CONFLUX_OPTIONS, endpointManager });
+    jest.spyOn(provider.rpc, 'request').mockImplementation(confluxRpc.request);
 
-    confluxRpc.rpc.getNextNonce.mockResolvedValueOnce(5n);
-    confluxRpc.rpc.getEpochNumber.mockResolvedValueOnce(100n);
-    confluxRpc.rpc.estimateGasAndCollateral.mockResolvedValueOnce({
-      gasUsed: 0x5208n,
-      gasLimit: 0x5208n,
-      storageCollateralized: 0n,
-    });
-    confluxRpc.rpc.getGasPrice.mockResolvedValueOnce(1n);
+    confluxRpc.responses.cfx_getNextNonce = '0x5';
+    confluxRpc.responses.cfx_epochNumber = '0x64';
 
     const unsigned = (await provider.buildTransaction({
       from: CONFLUX_ADDRESS,
@@ -140,23 +110,27 @@ describe('chain integration', () => {
     expect(unsigned.payload.nonce).toBe(5);
     expect(unsigned.payload.epochHeight).toBe(100);
 
-    const fee = await provider.estimateFee(unsigned);
-    expect(fee.gasLimit).toBe('0x5208');
-    expect(confluxRpc.rpc.estimateGasAndCollateral).toHaveBeenCalledWith({
-      from: CONFLUX_ADDRESS,
-      to: CONFLUX_ADDRESS,
-      data: '0x',
-      value: '0xde0b6b3a7640000',
-    });
+    const prepared = await provider.prepareUnsignedTransaction(unsigned);
+    expect(prepared.payload.gasLimit).toBe('0x5208');
+    expect(confluxRpc.request).toHaveBeenCalledWith('cfx_estimateGasAndCollateral', [
+      {
+        from: CONFLUX_ADDRESS,
+        to: CONFLUX_ADDRESS,
+        data: '0x',
+        value: '0xde0b6b3a7640000',
+      },
+      'latest_state',
+    ]);
 
     const signer = new SoftwareSigner(ETH_PRIVATE_KEY);
-    const signed = await provider.signTransaction(unsigned, signer);
-    expect(MockedPrivateKeyAccount).toHaveBeenCalledWith(ETH_PRIVATE_KEY, CONFLUX_OPTIONS.netId);
-    expect(confluxSignTransaction).toHaveBeenCalled();
+    const signed = await provider.signTransaction(prepared, signer);
+    expect(signed.rawTransaction).toMatch(/^0x[0-9a-f]+$/);
+    expect(signed.hash).toMatch(/^0x[0-9a-f]{64}$/);
 
-    confluxRpc.sdk.sendRawTransaction.mockResolvedValueOnce('0xconflux-hash');
+    confluxRpc.responses.cfx_sendRawTransaction = signed.hash;
     const hash = await provider.broadcastTransaction(signed);
-    expect(hash).toBe('0xconflux-hash');
+    expect(hash).toBe(signed.hash);
+    expect(confluxRpc.request).toHaveBeenCalledWith('cfx_sendRawTransaction', [signed.rawTransaction]);
   });
 
   it('runs full EVM flow: build → estimate → sign → broadcast', async () => {
@@ -214,7 +188,10 @@ describe('chain integration', () => {
 
     const confluxProvider = new ConfluxChainProvider({ ...CONFLUX_OPTIONS, endpointManager });
     const derivedBase32 = confluxProvider.deriveAddress(confluxPublicKey as `0x${string}`);
-    const expectedBase32 = convertHexToBase32(toAccountAddress(computeAccountAddress(confluxPublicKey as `0x${string}`)), CONFLUX_OPTIONS.netId);
+    const expectedBase32 = hexAddressToBase32({
+      hexAddress: toAccountAddress(computeAccountAddress(confluxPublicKey as `0x${string}`)) as `0x${string}`,
+      networkId: CONFLUX_OPTIONS.netId,
+    });
     expect(derivedBase32).toBe(expectedBase32);
 
     const ethereumProvider = new EthereumChainProvider({ ...ETHEREUM_OPTIONS, endpointManager });
@@ -229,7 +206,7 @@ describe('chain integration', () => {
     const confluxProvider = new ConfluxChainProvider({ ...CONFLUX_OPTIONS, endpointManager });
     const confluxSigner = new SoftwareSigner(ETH_PRIVATE_KEY);
     const confluxSignature = await confluxProvider.signMessage(message, confluxSigner);
-    expect(confluxProvider.verifyMessage(message, confluxSignature, CONFLUX_ADDRESS)).toBe(true);
+    await expect(confluxProvider.verifyMessage(message, confluxSignature, CONFLUX_ADDRESS)).resolves.toBe(true);
     const ethereumProvider = new EthereumChainProvider({ ...ETHEREUM_OPTIONS, endpointManager });
     const actualWallet = new actualEthers.Wallet(ETH_PRIVATE_KEY);
     const expectedSignature = await actualWallet.signMessage(message);
@@ -238,6 +215,6 @@ describe('chain integration', () => {
     const ethereumSigner = new SoftwareSigner(ETH_PRIVATE_KEY);
     const ethereumSignature = await ethereumProvider.signMessage(message, ethereumSigner);
     expect(ethereumSignature).toBe(expectedSignature);
-    expect(ethereumProvider.verifyMessage(message, ethereumSignature, actualWallet.address)).toBe(true);
+    await expect(ethereumProvider.verifyMessage(message, ethereumSignature, actualWallet.address)).resolves.toBe(true);
   });
 });

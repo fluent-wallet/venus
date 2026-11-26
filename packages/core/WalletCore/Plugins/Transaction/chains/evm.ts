@@ -1,21 +1,13 @@
-import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
 import { NetworkType } from '@core/database/models/Network';
+import { HttpJsonRpcClient } from '@core/rpc';
 import { addHexPrefix } from '@core/utils/base';
 import methods from '@core/WalletCore/Methods';
-import Decimal from 'decimal.js';
-/* eslint-disable @typescript-eslint/ban-types */
 import { Transaction as EVMTransaction, type TypedDataDomain, type TypedDataField, Wallet } from 'ethers';
-import {
-  calcGasCostFromEstimate,
-  calcGasCostFromEstimateOf1559,
-  estimateFor1559FromGasPrice,
-  estimateFromGasPrice,
-  fetchGasEstimatesViaEthFeeHistory,
-} from '../SuggestedGasEstimate';
+import { calcGasCostFromEstimate, calcGasCostFromEstimateOf1559, estimateFor1559FromGasPrice, estimateFromGasPrice } from '../SuggestedGasEstimate';
 import type { ITxEvm } from '../types';
 
 class Transaction {
-  public getGasPrice = (endpoint: string) => fetchChain<string>({ url: endpoint, method: 'eth_gasPrice' });
+  public getGasPrice = (endpoint: string) => new HttpJsonRpcClient(endpoint).request<string>('eth_gasPrice');
 
   public estimateGas = async ({ tx, endpoint, gasBuffer = 1 }: { tx: Partial<ITxEvm>; endpoint: string; gasBuffer?: number }) => {
     const isToAddressContract = tx.to
@@ -24,23 +16,19 @@ class Transaction {
     const isSendNativeToken = (!!tx.to && !isToAddressContract) || !tx.data || tx.data === '0x';
     if (isSendNativeToken) return addHexPrefix(BigInt(21000 * gasBuffer).toString(16));
 
-    const gas = await fetchChain<string>({
-      url: endpoint,
-      method: 'eth_estimateGas',
-      params: [
-        {
-          from: tx.from ? addHexPrefix(tx.from) : undefined,
-          to: tx.to ? addHexPrefix(tx.to) : undefined,
-          value: tx.value ? tx.value : undefined,
-          data: tx.data ? addHexPrefix(tx.data) : undefined,
-        },
-        'latest',
-      ],
-    });
+    const gas = await new HttpJsonRpcClient(endpoint).request<string>('eth_estimateGas', [
+      {
+        from: tx.from ? addHexPrefix(tx.from) : undefined,
+        to: tx.to ? addHexPrefix(tx.to) : undefined,
+        value: tx.value ? tx.value : undefined,
+        data: tx.data ? addHexPrefix(tx.data) : undefined,
+      },
+      'latest',
+    ]);
     return addHexPrefix((BigInt(gas) * BigInt(gasBuffer)).toString(16));
   };
 
-  public getBlockNumber = (endpoint: string) => fetchChain<string>({ url: endpoint, method: 'eth_blockNumber' });
+  public getBlockNumber = (endpoint: string) => new HttpJsonRpcClient(endpoint).request<string>('eth_blockNumber');
 
   public estimate = async ({
     tx,
@@ -58,8 +46,6 @@ class Transaction {
   }> => {
     const estimateGasLimitPromise = this.estimateGas({ tx, endpoint, gasBuffer });
     if (await this.isSupport1559(endpoint)) {
-      // const [_estimateOf1559, gasLimit] = await Promise.all([fetchGasEstimatesViaEthFeeHistory(new QueryOf1559(endpoint)), estimateGasLimitPromise]);
-      // return { gasLimit, gasPrice, estimateOf1559: calcGasCostFromEstimateOf1559(_estimateOf1559, gasLimit) };
       const [gasPrice, gasLimit] = await Promise.all([this.getGasPrice(endpoint), estimateGasLimitPromise]);
       return { gasLimit, gasPrice, estimateOf1559: calcGasCostFromEstimateOf1559(estimateFor1559FromGasPrice(gasPrice), gasLimit) };
     } else {
@@ -69,7 +55,7 @@ class Transaction {
   };
 
   public getTransactionCount = ({ endpoint, addressValue }: { endpoint: string; addressValue: string }) =>
-    fetchChain<string>({ url: endpoint, method: 'eth_getTransactionCount', params: [addressValue, 'pending'] });
+    new HttpJsonRpcClient(endpoint).request<string>('eth_getTransactionCount', [addressValue, 'pending']);
 
   async signTransaction({ privateKey, tx }: { privateKey: string; tx: ITxEvm }) {
     const transaction = new EVMTransaction();
@@ -81,11 +67,7 @@ class Transaction {
   }
 
   public sendRawTransaction = ({ txRaw, endpoint }: { txRaw: string; endpoint: string }) =>
-    fetchChain<string>({
-      url: endpoint,
-      method: 'eth_sendRawTransaction',
-      params: [txRaw],
-    });
+    new HttpJsonRpcClient(endpoint).request<string>('eth_sendRawTransaction', [txRaw]);
 
   public signMessage = ({ message, privateKey }: { message: string; privateKey: string }) => {
     const wallet = new Wallet(privateKey);
@@ -109,33 +91,9 @@ class Transaction {
   };
 
   public isSupport1559 = async (endpoint: string) => {
-    const block = await fetchChain<{ baseFeePerGas: string }>({ url: endpoint, method: 'eth_getBlockByNumber', params: ['latest', false] });
+    const block = await new HttpJsonRpcClient(endpoint).request<{ baseFeePerGas: string }>('eth_getBlockByNumber', ['latest', false]);
     return block.baseFeePerGas !== undefined;
   };
 }
 
 export default new Transaction();
-
-class QueryOf1559 {
-  endpoint: string;
-  constructor(endpoint: string) {
-    this.endpoint = endpoint;
-  }
-
-  public sendAsync = (opts: any, callback: Function) =>
-    fetchChain({
-      url: this.endpoint,
-      method: opts.method,
-      params: opts.params,
-    })
-      .then((res) => callback(null, res))
-      .catch((err) => callback(err));
-
-  blockNumber = (callback: Function) => this.sendAsync({ method: 'eth_blockNumber' }, callback);
-
-  getBlockByNumber = (..._params: any) => {
-    const params = _params;
-    const callback = params.pop();
-    return this.sendAsync({ method: 'eth_getBlockByNumber', params }, callback);
-  };
-}

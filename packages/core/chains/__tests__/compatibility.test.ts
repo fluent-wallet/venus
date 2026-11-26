@@ -1,52 +1,20 @@
 import 'reflect-metadata';
 import { SoftwareSigner } from '@core/signers';
 
-const mockFetchChain = jest.fn();
+const mockRpcRequest = jest.fn();
 const mockCheckIsContractAddress = jest.fn();
 
-jest.mock('@cfx-kit/dapp-utils/dist/fetch', () => ({
-  fetchChain: (...args: unknown[]) => mockFetchChain(...args),
+jest.mock('@core/rpc', () => ({
+  HttpJsonRpcClient: jest.fn().mockImplementation(() => ({ request: (...args: unknown[]) => mockRpcRequest(...args) })),
 }));
 
 jest.mock('@core/WalletCore/Methods', () => ({
   checkIsContractAddress: (...args: unknown[]) => mockCheckIsContractAddress(...args),
 }));
 
-jest.mock('@cfx-kit/dapp-utils/dist/contract', () => {
-  const { iface777, iface721, iface1155 } = require('@core/contracts');
-  const { convertBase32ToHex } = require('@core/utils/address');
-
-  const normalizeArg = (value: unknown): unknown => {
-    if (typeof value === 'string' && value.startsWith('cfx')) {
-      try {
-        return convertBase32ToHex(value);
-      } catch {
-        return value;
-      }
-    }
-    if (Array.isArray(value)) {
-      return value.map(normalizeArg);
-    }
-    return value;
-  };
-
-  const wrap = (iface: { encodeFunctionData(method: string, args: unknown[]): string }) => ({
-    encodeFunctionData(method: string, args: unknown[]) {
-      const normalized = args.map(normalizeArg);
-      return iface.encodeFunctionData(method, normalized);
-    },
-  });
-
-  return {
-    createERC20Contract: () => wrap(iface777),
-    createERC721Contract: () => wrap(iface721),
-    createERC1155Contract: () => wrap(iface1155),
-  };
-});
-
 import type { Network } from '@core/database/models/Network';
 import {
-  createMockConfluxSdk,
+  createMockConfluxRpc,
   createMockEthersProvider,
   DEFAULT_BASE32_ADDRESS_TEST,
   DEFAULT_HEX_ADDRESS,
@@ -66,15 +34,6 @@ import { checksum } from 'ox/Address';
 import { ChainRegistry, ConfluxChainProvider, EthereumChainProvider } from '..';
 import { EndpointManager } from '../EndpointManager';
 
-jest.mock('js-conflux-sdk', () => {
-  const actual = jest.requireActual('js-conflux-sdk');
-  return {
-    ...actual,
-    Conflux: jest.fn(),
-    PrivateKeyAccount: jest.fn(),
-  };
-});
-
 jest.mock('ethers', () => {
   const actual = jest.requireActual('ethers');
   return {
@@ -84,10 +43,8 @@ jest.mock('ethers', () => {
   };
 });
 
-const actualConflux = jest.requireActual('js-conflux-sdk');
 const actualEthers = jest.requireActual('ethers');
 
-const { Conflux: MockedConflux, PrivateKeyAccount: MockedPrivateKeyAccount } = jest.requireMock('js-conflux-sdk');
 const { JsonRpcProvider: MockedJsonRpcProvider, Wallet: MockedWallet } = jest.requireMock('ethers');
 
 const CONFLUX_ENDPOINT = 'https://rpc.test/cfx';
@@ -160,19 +117,18 @@ const toLegacyTx = (payload: ConfluxUnsignedTransactionPayload): ITxEvm => ({
 });
 
 describe('chain compatibility', () => {
-  let confluxMocks: ReturnType<typeof createMockConfluxSdk>;
+  let confluxMocks: ReturnType<typeof createMockConfluxRpc>;
   let ethersMocks: ReturnType<typeof createMockEthersProvider>;
-  let confluxSignStub: jest.Mock;
   let walletSignStub: jest.Mock;
   let walletSignMessageStub: jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockFetchChain.mockReset();
+    mockRpcRequest.mockReset();
     mockCheckIsContractAddress.mockReset();
 
-    mockFetchChain.mockImplementation(({ method }: { method?: string }) => {
+    mockRpcRequest.mockImplementation((method: string) => {
       switch (method) {
         case 'cfx_estimateGasAndCollateral':
           return { gasLimit: '0x5208', storageCollateralized: '0x0' };
@@ -189,25 +145,8 @@ describe('chain compatibility', () => {
       }
     });
     mockCheckIsContractAddress.mockResolvedValue(false);
-    confluxMocks = createMockConfluxSdk();
+    confluxMocks = createMockConfluxRpc();
     ethersMocks = createMockEthersProvider();
-
-    MockedConflux.mockImplementation(() => ({
-      cfx: confluxMocks.rpc,
-      sendRawTransaction: confluxMocks.sdk.sendRawTransaction,
-    }));
-
-    confluxSignStub = jest.fn();
-
-    MockedPrivateKeyAccount.mockImplementation((privateKey: string, netId: number) => {
-      const actualAccount = new actualConflux.PrivateKeyAccount(privateKey, netId);
-      return {
-        signTransaction(txData: unknown) {
-          confluxSignStub(txData);
-          return actualAccount.signTransaction(txData);
-        },
-      };
-    });
 
     MockedJsonRpcProvider.mockImplementation(() => ethersMocks.provider);
 
@@ -312,6 +251,7 @@ describe('chain compatibility', () => {
     it.each(confluxCases)('%s matches legacy builder', async ({ asset, amount, assetDecimals, recipient, params }) => {
       const endpointManager = createEndpointManager();
       const provider = new ConfluxChainProvider({ ...CONFLUX_OPTIONS, endpointManager });
+      jest.spyOn(provider.rpc, 'request').mockImplementation(confluxMocks.request);
       const from = DEFAULT_BASE32_ADDRESS_TEST;
 
       const legacyNetwork = { chainId: CONFLUX_OPTIONS.chainId, networkType: NetworkType.Conflux } as unknown as Network;
@@ -368,11 +308,12 @@ describe('chain compatibility', () => {
     });
   });
   describe('signing compatibility', () => {
-    it('Conflux signing aligns with legacy implementation', async () => {
+    it('Conflux signing matches the SDK reference bytes', async () => {
       const endpointManager = createEndpointManager();
       const provider = new ConfluxChainProvider({ ...CONFLUX_OPTIONS, endpointManager });
-      confluxMocks.rpc.getNextNonce.mockResolvedValueOnce(1n);
-      confluxMocks.rpc.getEpochNumber.mockResolvedValueOnce(100n);
+      jest.spyOn(provider.rpc, 'request').mockImplementation(confluxMocks.request);
+      confluxMocks.responses.cfx_getNextNonce = '0x1';
+      confluxMocks.responses.cfx_epochNumber = '0x64';
 
       const from = DEFAULT_BASE32_ADDRESS_TEST;
       const unsigned = (await provider.buildTransaction({
@@ -390,14 +331,10 @@ describe('chain compatibility', () => {
       const signer = new SoftwareSigner(DEFAULT_PRIVATE_KEY);
       const signed = await provider.signTransaction(unsigned, signer);
 
-      const legacyRaw = await ConfluxLegacy.signTransaction({
-        privateKey: DEFAULT_PRIVATE_KEY,
-        tx: toLegacyTx(unsigned.payload),
-        netId: CONFLUX_OPTIONS.netId,
-        epochHeight: '0x64',
-      });
-
-      expect(signed.rawTransaction).toBe(legacyRaw);
+      // Generated with js-conflux-sdk 2.5.0 for the transaction above.
+      expect(signed.rawTransaction).toBe(
+        '0xf86be7010182520894146b39d7d12d34ddb93640ba8487c1cc143bb37d880de0b6b3a76400008064018080a0d03b0c3ccc9deff096ea895b2c19d7e1a935498b02504e0becfb58b9c854f257a00642d9c67fc5d6d36cea54d70130a2c1f5bc3cca810ba99a9bb0df247a0cc337',
+      );
     });
 
     it('Ethereum signing aligns with legacy implementation', async () => {
@@ -441,6 +378,7 @@ describe('chain compatibility', () => {
     it('Conflux fee estimation calls match legacy pipeline', async () => {
       const endpointManager = createEndpointManager();
       const provider = new ConfluxChainProvider({ ...CONFLUX_OPTIONS, endpointManager });
+      jest.spyOn(provider.rpc, 'request').mockImplementation(confluxMocks.request);
       const unsigned = (await provider.buildTransaction({
         from: DEFAULT_BASE32_ADDRESS_TEST,
         to: DEFAULT_BASE32_ADDRESS_TEST,
@@ -449,13 +387,6 @@ describe('chain compatibility', () => {
         assetType: AssetType.Native,
         assetDecimals: 18,
       })) as ConfluxUnsignedTransaction;
-
-      confluxMocks.rpc.estimateGasAndCollateral.mockResolvedValueOnce({
-        gasUsed: 21_000n,
-        gasLimit: 21_000n,
-        storageCollateralized: 0n,
-      });
-      confluxMocks.rpc.getGasPrice.mockResolvedValueOnce(1n);
 
       const newEstimate = await provider.estimateFee(unsigned);
       expect(newEstimate.gasLimit).toBe('0x5208');
@@ -470,7 +401,10 @@ describe('chain compatibility', () => {
       });
 
       expect(legacyEstimate.gasLimit).toBe(newEstimate.gasLimit);
-      expect(confluxMocks.rpc.estimateGasAndCollateral).toHaveBeenCalled();
+      expect(confluxMocks.request).toHaveBeenCalledWith('cfx_estimateGasAndCollateral', [
+        expect.objectContaining({ from: unsigned.payload.from, to: unsigned.payload.to }),
+        'latest_state',
+      ]);
     });
 
     it('Ethereum fee estimation calls match legacy pipeline', async () => {

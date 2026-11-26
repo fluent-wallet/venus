@@ -1,3 +1,4 @@
+import { ZeroAddress } from 'ethers';
 import { atom, useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
 import { groupBy, sortBy, toPairs } from 'lodash-es';
@@ -6,7 +7,6 @@ import database, { dbRefresh$ } from '../../../../database';
 import type { Account } from '../../../../database/models/Account';
 import VaultType from '../../../../database/models/Vault/VaultType';
 import TableName from '../../../../database/TableName';
-import { zeroAddress } from '../../../../utils/address';
 import { accountGroupsObservable } from './useAccountGroups';
 import { currentNetworkObservable } from './useCurrentNetwork';
 
@@ -32,7 +32,7 @@ export const accountsManageObservable = combineLatest([dbRefresh$.pipe(startWith
               index: account.index,
               hidden: account.hidden,
               selected: account.selected,
-              addressValue: currentNetworkAddress ? await currentNetworkAddress.getValue() : zeroAddress,
+              addressValue: currentNetworkAddress ? await currentNetworkAddress.getValue() : ZeroAddress,
             },
             accountGroup,
             vault: await _accountGroup.vault,

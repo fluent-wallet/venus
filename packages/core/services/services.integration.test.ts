@@ -21,9 +21,10 @@ import { createMockHardwareWallet, createStrictTestCryptoTool } from '@core/test
 import { DEFAULT_HEX_ADDRESS, StubChainProvider } from '@core/testUtils/mocks/chainProviders';
 import { AssetType, TX_EXECUTION_STATUS, TX_LIFECYCLE_STATUS } from '@core/types';
 import type { CryptoTool } from '@core/types/crypto';
-import { convertHexToBase32 } from '@core/utils/address';
+import { toAccountAddress } from '@core/utils/account';
 import { NetworkType } from '@core/utils/consts';
 import { getNthAccountOfHDKey } from '@core/utils/hdkey';
+import { hexAddressToBase32 } from 'cive/utils';
 import { Container } from 'inversify';
 
 const TEST_PASSWORD = 'test-password';
@@ -97,7 +98,7 @@ describe('Service integration', () => {
     expect(dbAddress.hex.toLowerCase()).toBe(expectedHex);
 
     if (network.networkType === NetworkType.Conflux) {
-      const expectedBase32 = convertHexToBase32(dbAddress.hex, network.netId);
+      const expectedBase32 = hexAddressToBase32({ hexAddress: toAccountAddress(dbAddress.hex) as `0x${string}`, networkId: network.netId });
       expect(dbAddress.base32).toBe(expectedBase32);
 
       expect(await dbAddress.getValue()).toBe(expectedBase32);
