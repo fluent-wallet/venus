@@ -214,7 +214,7 @@ export class EthereumChainProvider implements IChainProvider<EvmUnsignedTransact
     }
   }
 
-  verifyMessage(message: string, signature: string, address: Address): boolean {
+  async verifyMessage(message: string, signature: string, address: Address): Promise<boolean> {
     try {
       const isHexBytes = message.length % 2 === 0 && /^0x[0-9a-fA-F]*$/.test(message);
       const messageBytes = isHexBytes ? getBytes(message) : toUtf8Bytes(message);

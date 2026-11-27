@@ -57,7 +57,7 @@ export interface IChainProvider<TUnsignedTransaction extends UnsignedTransaction
   getNonce(address: Address): Promise<number>;
 
   signMessage(message: string, signer: ISigner): Promise<string>;
-  verifyMessage(message: string, signature: string, address: Address): boolean;
+  verifyMessage(message: string, signature: string, address: Address): Promise<boolean>;
 }
 
 export type AnyChainProvider = IChainProvider<any, any>;

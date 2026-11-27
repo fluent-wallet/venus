@@ -27,26 +27,27 @@ export const DEFAULT_PRIVATE_KEY = '0xbb598b87b7799d0042d76978adf1594311a3c4dd25
 export const DEFAULT_TEST_NET_20_TOKEN_CONTRACT = 'cfxtest:acepe88unk7fvs18436178up33hb4zkuf62a9dk1gv';
 export const DEFAULT_TEST_NFT_721_CONTRACT = 'cfxtest:acepe88unk7fvs18436178up33hb4zkuf62a9dk1gv';
 export const DEFAULT_TEST_NET_1155_CONTRACT = 'cfxtest:acc8mtwgyrv97rf2ycvg9tee93a7gxs3ea1vb05d31';
-export const createMockConfluxSdk = () => {
-  const rpc = {
-    getBalance: jest.fn().mockResolvedValue(0n),
-    getNextNonce: jest.fn().mockResolvedValue(0n),
-    getEpochNumber: jest.fn().mockResolvedValue(0n),
-    estimateGasAndCollateral: jest.fn().mockResolvedValue({
-      gasUsed: 21_000n,
-      gasLimit: 21_000n,
-      storageCollateralized: 0n,
-    }),
-    getGasPrice: jest.fn().mockResolvedValue(1n),
-    call: jest.fn(),
+export const createMockConfluxRpc = () => {
+  const responses: Record<string, unknown> = {
+    cfx_getBalance: '0x0',
+    cfx_getNextNonce: '0x0',
+    cfx_epochNumber: '0x0',
+    cfx_estimateGasAndCollateral: {
+      gasUsed: '0x5208',
+      gasLimit: '0x5208',
+      storageCollateralized: '0x0',
+    },
+    cfx_gasPrice: '0x1',
+    cfx_call: '0x',
+    cfx_sendRawTransaction: '0xhash',
   };
 
   return {
-    sdk: {
-      cfx: rpc,
-      sendRawTransaction: jest.fn().mockResolvedValue('0xhash'),
-    },
-    rpc,
+    responses,
+    request: jest.fn(async (method: string) => {
+      if (!(method in responses)) throw new Error(`Unexpected Conflux RPC method: ${method}`);
+      return responses[method];
+    }),
   };
 };
 
@@ -274,7 +275,7 @@ export class StubChainProvider implements IChainProvider {
     return '0x';
   }
 
-  verifyMessage(): boolean {
+  async verifyMessage(): Promise<boolean> {
     return true;
   }
 }

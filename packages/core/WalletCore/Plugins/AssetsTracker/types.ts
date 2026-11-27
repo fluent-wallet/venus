@@ -9,7 +9,6 @@ export type FetchAssetBalance = (params: {
     contractAddress?: string | null;
     assetType?: Omit<AssetType, AssetType.ERC1155 | AssetType.ERC721>;
   }>;
-  key?: string;
 }) => Promise<Array<string>>;
 
 export interface AssetInfo {

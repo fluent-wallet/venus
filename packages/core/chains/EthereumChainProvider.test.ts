@@ -401,8 +401,8 @@ describe('EthereumChainProvider', () => {
 
     const signature = await actualWallet.signMessage('venus');
 
-    expect(provider.verifyMessage('venus', signature, actualWallet.address)).toBe(true);
-    expect(provider.verifyMessage('venus', signature, '0x0000000000000000000000000000000000000000')).toBe(false);
+    await expect(provider.verifyMessage('venus', signature, actualWallet.address)).resolves.toBe(true);
+    await expect(provider.verifyMessage('venus', signature, '0x0000000000000000000000000000000000000000')).resolves.toBe(false);
   });
 
   it('builds ERC721 transfers and keeps zero value', async () => {

@@ -61,7 +61,7 @@ export class AuthenticationServer implements IAuthenticationServer {
 
   private pwdCache: string | null = null;
   private getPasswordPromise: Promise<string | null> | null = null;
-  private pwdCacheTimer: number | null = null;
+  private pwdCacheTimer: ReturnType<typeof setTimeout> | null = null;
 
   private biometricCryptoTool = new CryptoToolServer();
 

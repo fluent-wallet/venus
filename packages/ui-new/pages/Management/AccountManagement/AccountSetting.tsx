@@ -6,12 +6,12 @@ import { SheetBody, SheetFooter, SheetHeader, SheetScrollView } from '@component
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
-import { zeroAddress } from '@core/utils/address';
 import { useTheme } from '@react-navigation/native';
 import { type AccountSettingStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
 import { useAccountById, useRemoveAccount, useUpdateAccountNickname } from '@service/account';
 import { VaultType } from '@service/core';
 import { getErrorCode } from '@utils/error';
+import { ZeroAddress } from 'ethers';
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -95,7 +95,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
       <SheetScrollView>
         <SheetBody>
           <Text style={[styles.description, { marginTop: 14, color: colors.textSecondary }]}>{t('account.detail.address')}</Text>
-          <Text style={[styles.address, styles.mainText, { color: colors.textPrimary, opacity: addressValue ? 1 : 0 }]}>{addressValue || zeroAddress}</Text>
+          <Text style={[styles.address, styles.mainText, { color: colors.textPrimary, opacity: addressValue ? 1 : 0 }]}>{addressValue || ZeroAddress}</Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.detail.accountName')}</Text>
           <TextInput
             ref={textinputRef}

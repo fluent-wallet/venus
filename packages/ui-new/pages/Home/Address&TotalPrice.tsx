@@ -4,13 +4,14 @@ import EyeClose from '@assets/icons/eye-close.svg';
 import EyeOpen from '@assets/icons/eye-open.svg';
 import Skeleton from '@components/Skeleton';
 import Text from '@components/Text';
-import { shortenAddress, zeroAddress } from '@core/utils/address';
 import { numberWithCommas, truncate } from '@core/utils/balance';
 import { usePriceVisible } from '@hooks/usePriceVisible';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useTheme } from '@react-navigation/native';
 import { useCurrentAddress } from '@service/account';
 import { useAssetsSummaryOfCurrentAddress } from '@service/asset';
+import { shortenAddress } from '@utils/address';
+import { ZeroAddress } from 'ethers';
 import type React from 'react';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -38,7 +39,7 @@ export const CurrentAddress: React.FC = () => {
       style={({ pressed }) => [styles.addressContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
       testID="currentAddress"
     >
-      <Text style={{ color: colors.textSecondary, opacity: currentAddressValue ? 1 : 0 }}>{shortenAddress(currentAddressValue || zeroAddress)}</Text>
+      <Text style={{ color: colors.textSecondary, opacity: currentAddressValue ? 1 : 0 }}>{shortenAddress(currentAddressValue || ZeroAddress)}</Text>
       <Copy color={colors.textSecondary} />
     </Pressable>
   );

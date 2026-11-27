@@ -44,7 +44,7 @@ describe('Nonce Errors', () => {
 
     expect(parseError.errorType).toBe(ProcessErrorType.duplicateTx);
   });
-  test('Using a nonce already sent to the transaction pool 2', () => {
+  test('Using a gas price too low to replace a transaction', () => {
     const res = {
       jsonrpc: '2.0',
       id: '15922956697249514502',
@@ -56,7 +56,7 @@ describe('Nonce Errors', () => {
     };
     const parseError = processError(res.error);
 
-    expect(parseError.errorType).toBe(ProcessErrorType.duplicateTx);
+    expect(parseError.errorType).toBe(ProcessErrorType.replaceUnderpriced);
   });
 
   test('Using a too large nonce', () => {

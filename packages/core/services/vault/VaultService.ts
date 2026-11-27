@@ -17,11 +17,11 @@ import { CORE_IDENTIFIERS } from '@core/di';
 import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
 import { NetworkType } from '@core/types';
 import type { CryptoTool } from '@core/types/crypto';
-import { fromPrivate, toChecksum } from '@core/utils/account';
-import { convertHexToBase32 } from '@core/utils/address';
+import { fromPrivate, toAccountAddress, toChecksum } from '@core/utils/account';
 import { addHexPrefix, stripHexPrefix } from '@core/utils/base';
 import { generateMnemonic, getNthAccountOfHDKey } from '@core/utils/hdkey';
 import { type Model, Q } from '@nozbe/watermelondb';
+import { hexAddressToBase32 } from 'cive/utils';
 import { Mnemonic } from 'ethers';
 import { inject, injectable } from 'inversify';
 import { getGroupedAccountNickname } from '../account/naming';
@@ -105,7 +105,10 @@ export class VaultService {
           record.network.set(network);
           record.assetRule.set(assetRule);
           record.hex = checksum;
-          record.base32 = network.networkType === NetworkType.Conflux ? convertHexToBase32(checksum, network.netId) : checksum;
+          record.base32 =
+            network.networkType === NetworkType.Conflux
+              ? hexAddressToBase32({ hexAddress: toAccountAddress(checksum) as `0x${string}`, networkId: network.netId })
+              : checksum;
         });
       }),
     );

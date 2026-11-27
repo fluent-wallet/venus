@@ -62,6 +62,7 @@ module.exports = () => {
     plugins: [
       ['expo-dev-client', { addGeneratedScheme: environment === 'dev' }],
       'expo-localization',
+      'expo-image',
       [
         'expo-build-properties',
         {

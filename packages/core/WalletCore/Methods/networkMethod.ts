@@ -1,6 +1,9 @@
-import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
+import { HttpJsonRpcClient } from '@core/rpc';
+import type { Address as Base32Address } from 'cive';
+import { decodeBase32Address, isAddress } from 'cive/utils';
 import { inject, injectable } from 'inversify';
 import { memoize } from 'lodash-es';
+import { validate as isHexAddress } from 'ox/Address';
 import { concatMap, firstValueFrom, from, toArray } from 'rxjs';
 import database from '../../database';
 import type { Account } from '../../database/models/Account';
@@ -20,7 +23,6 @@ import {
 import VaultType from '../../database/models/Vault/VaultType';
 import TableName from '../../database/TableName';
 import { fromPrivate } from '../../utils/account';
-import { type Base32Address, convertBase32ToHex, validateCfxAddress, validateHexAddress } from '../../utils/address';
 import { getNthAccountOfHDKey } from '../../utils/hdkey';
 import { GetDecryptedVaultDataMethod } from './getDecryptedVaultData';
 
@@ -157,10 +159,10 @@ export class NetworkMethod {
   _checkIsValidAddress({ networkType, addressValue }: { networkType: NetworkType; addressValue: string }) {
     if (!addressValue) return false;
     if (networkType === NetworkType.Conflux) {
-      return validateCfxAddress(addressValue);
+      return isAddress(addressValue);
     }
     if (networkType === NetworkType.Ethereum) {
-      return validateHexAddress(addressValue);
+      return isHexAddress(addressValue, { strict: false });
     }
     return false;
   }
@@ -186,25 +188,17 @@ export class NetworkMethod {
   private _checkIsContractAddress({ networkType, endpoint, addressValue }: { networkType: NetworkType; endpoint: string; addressValue: string }) {
     if (networkType === NetworkType.Conflux) {
       try {
-        const hex = convertBase32ToHex(addressValue as Base32Address);
-        return hex.startsWith('0x8');
+        return decodeBase32Address({ address: addressValue as Base32Address }).type === 'contract';
       } catch (_) {
         return false;
       }
     } else {
       const rpcPrefix = networkRpcPrefixMap[networkType];
       const rpcSuffix = networkRpcSuffixMap[networkType];
-      return new Promise((resolve, reject) =>
-        fetchChain<string>({ url: endpoint, method: `${rpcPrefix}_getCode`, params: [addressValue, rpcSuffix] })
-          .then(() => resolve(true))
-          .catch((err) => {
-            if (String(err)?.includes('timed out')) {
-              reject(err);
-            } else {
-              resolve(false);
-            }
-          }),
-      );
+      return new HttpJsonRpcClient(endpoint).request<string>(`${rpcPrefix}_getCode`, [addressValue, rpcSuffix]).then((code) => {
+        if (typeof code !== 'string') throw new Error('Invalid eth_getCode response type.');
+        return code !== '0x';
+      });
     }
   }
 

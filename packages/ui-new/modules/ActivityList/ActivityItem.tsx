@@ -1,7 +1,6 @@
 import Spinner from '@components/Spinner';
 import Text from '@components/Text';
 import { ASSET_TYPE, SPEED_UP_ACTION } from '@core/types';
-import { shortenAddress } from '@core/utils/address';
 import { maxUint256 } from '@core/utils/number';
 import useFormatBalance from '@hooks/useFormatBalance';
 import { useShowSpeedUp } from '@hooks/useShowSpeedUp';
@@ -11,6 +10,7 @@ import SpeedUpButton from '@modules/SpeedUpButton';
 import { useTheme } from '@react-navigation/native';
 import type { IActivityTransaction } from '@service/core';
 import { getTransactionSummaryStatus, isTransactionPendingState, TX_STATUS, type TxStatusValue } from '@service/transactionStatus';
+import { shortenAddress } from '@utils/address';
 import type React from 'react';
 import { type ComponentProps, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

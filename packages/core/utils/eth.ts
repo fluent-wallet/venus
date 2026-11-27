@@ -1,3 +1,5 @@
+import { CHAIN_RPC_ERROR_RESPONSE, CoreError } from '@core/errors';
+
 // shouldDiscard means should stop tracking this tx
 // error from geth txpool error
 // https://github.com/ethereum/go-ethereum/blob/2d20fed893faa894f50af709349b13b6ad9b45db/core/tx_pool.go#L56
@@ -42,6 +44,9 @@ export enum ProcessErrorType {
 }
 
 export const processError = (err: unknown): { errorType: ProcessErrorType; shouldDiscard: boolean } => {
+  if (err instanceof CoreError && err.code === CHAIN_RPC_ERROR_RESPONSE) {
+    err = err.context?.rpcError ?? err;
+  }
   if (typeof (err as any)?.data === 'string' || typeof (err as any)?.message === 'string') {
     const errStr = (err as any).data || (err as any).message || '';
     if (

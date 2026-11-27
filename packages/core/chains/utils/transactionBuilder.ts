@@ -1,18 +1,10 @@
 import { iface721, iface777, iface1155 } from '@core/contracts';
 import type { Address, Hex } from '@core/types';
 import { AssetType } from '@core/types';
-import { type Base32Address, convertBase32ToHex, decode } from '@core/utils/address';
+import { base32AddressToHex, isAddress } from 'cive/utils';
 import * as OxHex from 'ox/Hex';
 import * as OxValue from 'ox/Value';
 
-const isBase32Address = (value: Address): value is Base32Address => {
-  try {
-    decode(value);
-    return true;
-  } catch {
-    return false;
-  }
-};
 export interface TransactionBuildInput {
   from: Address;
   to: Address;
@@ -33,7 +25,7 @@ export interface EvmTransactionPayload {
 }
 
 const normalizeAddressForCalldata = (value: Address): Address => {
-  return isBase32Address(value) ? convertBase32ToHex(value) : value;
+  return isAddress(value) ? base32AddressToHex({ address: value }) : value;
 };
 export const buildNativeTransfer = (input: TransactionBuildInput): EvmTransactionPayload => {
   const { from, to, amount, assetDecimals, chainId } = input;

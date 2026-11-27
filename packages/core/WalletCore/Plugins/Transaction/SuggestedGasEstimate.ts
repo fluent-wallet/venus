@@ -1,6 +1,5 @@
 import { type Network, NetworkType } from '@core/database/models/Network';
 import { Networks } from '@core/utils/consts';
-import { fetchGasEstimatesViaEthFeeHistory as _fetchGasEstimatesViaEthFeeHistory } from '@metamask/gas-fee-controller';
 import Decimal from 'decimal.js';
 
 export const Gwei = new Decimal(10).pow(9);
@@ -19,22 +18,6 @@ export const clampGasPrice = (gasPrice: string, network: Pick<Network, 'chainId'
   return new Decimal(gasPrice).lt(minGasPrice) ? minGasPrice : gasPrice;
 };
 
-export const fetchGasEstimatesViaEthFeeHistory = async (query: any) =>
-  _fetchGasEstimatesViaEthFeeHistory(query).then((res) => ({
-    high: {
-      suggestedMaxPriorityFeePerGas: new Decimal(res.high.suggestedMaxPriorityFeePerGas).mul(Gwei).toHex(),
-      suggestedMaxFeePerGas: new Decimal(res.high.suggestedMaxFeePerGas).mul(Gwei).toHex(),
-    },
-    medium: {
-      suggestedMaxPriorityFeePerGas: new Decimal(res.medium.suggestedMaxPriorityFeePerGas).mul(Gwei).toHex(),
-      suggestedMaxFeePerGas: new Decimal(res.medium.suggestedMaxFeePerGas).mul(Gwei).toHex(),
-    },
-    low: {
-      suggestedMaxPriorityFeePerGas: new Decimal(res.low.suggestedMaxPriorityFeePerGas).mul(Gwei).toHex(),
-      suggestedMaxFeePerGas: new Decimal(res.low.suggestedMaxFeePerGas).mul(Gwei).toHex(),
-    },
-  }));
-
 const levels = {
   high: {
     baseFeePercentageMultiplier: 1.2,
@@ -52,6 +35,8 @@ const levels = {
 
 export type Level = keyof typeof levels;
 
+type Eip1559GasEstimate = Record<Level, { suggestedMaxFeePerGas: string; suggestedMaxPriorityFeePerGas: string }>;
+
 export const estimateFor1559FromGasPrice = (gasPrice: string) => {
   const price = new Decimal(gasPrice);
 
@@ -63,10 +48,10 @@ export const estimateFor1559FromGasPrice = (gasPrice: string) => {
         suggestedMaxPriorityFeePerGas: price.mul(value.priorityFeePercentageMultiplier).toHex(),
       },
     ]),
-  ) as Awaited<ReturnType<typeof fetchGasEstimatesViaEthFeeHistory>>;
+  ) as Eip1559GasEstimate;
 };
 
-export const calcGasCostFromEstimateOf1559 = (estimate: Awaited<ReturnType<typeof fetchGasEstimatesViaEthFeeHistory>>, gasLimit: string) => {
+export const calcGasCostFromEstimateOf1559 = (estimate: Eip1559GasEstimate, gasLimit: string) => {
   return Object.fromEntries(
     Object.entries(estimate).map(([level, { suggestedMaxPriorityFeePerGas, suggestedMaxFeePerGas }]) => [
       level,

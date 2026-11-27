@@ -1,6 +1,6 @@
 export { mockDatabase } from '@core/database/testUtils/mockDatabases';
 export {
-  createMockConfluxSdk,
+  createMockConfluxRpc,
   createMockConfluxUnsignedTx,
   createMockEthersProvider,
   createMockEvmUnsignedTx,

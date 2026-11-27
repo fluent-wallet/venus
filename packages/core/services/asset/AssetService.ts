@@ -19,10 +19,10 @@ import {
   type IChainProvider,
 } from '@core/types';
 import { convertToChecksum } from '@core/utils/account';
-import { type Base32Address, convertBase32ToHex } from '@core/utils/address';
 import { balanceFormat, convertBalanceToDecimal, truncate } from '@core/utils/balance';
 import { NetworkType } from '@core/utils/consts';
 import { Q } from '@nozbe/watermelondb';
+import { base32AddressToHex, isAddress } from 'cive/utils';
 import Decimal from 'decimal.js';
 import { inject, injectable } from 'inversify';
 import { AssetDiscoveryRegistry } from './discovery/AssetDiscoveryRegistry';
@@ -528,8 +528,8 @@ export class AssetService {
   }
 
   private resolveCalldataAddress(address: string, networkType: NetworkType): string {
-    if (networkType === NetworkType.Conflux && (address.startsWith('cfx') || address.startsWith('net'))) {
-      return convertBase32ToHex(address as Base32Address);
+    if (networkType === NetworkType.Conflux && isAddress(address)) {
+      return base32AddressToHex({ address });
     }
     return address;
   }

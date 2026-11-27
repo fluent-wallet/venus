@@ -43,21 +43,6 @@ class TransactionPluginClass implements Plugin {
     return transactionInstance.getTransactionCount({ endpoint: network.endpoint, addressValue });
   };
 
-  public signTransaction = ({
-    network,
-    privateKey,
-    tx,
-    epochHeight,
-  }: {
-    network: Pick<Network, 'networkType' | 'endpoint' | 'netId'>;
-    privateKey: string;
-    tx: ITxEvm;
-    epochHeight: string;
-  }) => {
-    const transactionInstance = getTransactionInstance(network);
-    return transactionInstance.signTransaction({ tx, privateKey, netId: network.netId, epochHeight });
-  };
-
   public sendRawTransaction = ({ network, txRaw }: { network: Pick<Network, 'networkType' | 'endpoint'>; txRaw: string }) => {
     const transactionInstance = getTransactionInstance(network);
     return transactionInstance.sendRawTransaction({ txRaw, endpoint: network.endpoint });

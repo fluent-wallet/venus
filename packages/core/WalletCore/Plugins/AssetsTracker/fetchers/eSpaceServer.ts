@@ -1,6 +1,6 @@
-import { createContract } from '@cfx-kit/dapp-utils/dist/contract';
-import { createFetchServer, fetchChainBatch } from '@cfx-kit/dapp-utils/dist/fetch';
-import { getAddress as toChecksumAddress } from 'ethers';
+import { HttpJsonRpcClient } from '@core/rpc';
+import { Interface, getAddress as toChecksumAddress } from 'ethers';
+import ky from 'ky';
 import { catchError, concatMap, EMPTY, from, lastValueFrom, map } from 'rxjs';
 import ESpaceWalletABI from '../../../../contracts/ABI/ESpaceWallet';
 import { AssetType } from '../../../../database/models/Asset';
@@ -8,10 +8,9 @@ import { ChainType, type Network } from './../../../../database/models/Network/i
 import { Networks } from '../../../../utils/consts';
 import type { AssetInfo } from '../types';
 
-export const eSpaceTestnetWalletContract = createContract({ address: '0xce2104aa7233b27b0ba2e98ede59b6f78c06ae05', ABI: ESpaceWalletABI });
-export const eSpaceTestnetServerFetcher = createFetchServer({ prefixUrl: Networks['eSpace Testnet'].scanOpenAPI });
-export const eSpaceWalletContract = createContract({ address: '0x2c7e015328f37f00f9b16e4adc9cedb1f8742069', ABI: ESpaceWalletABI });
-export const eSpaceServerFetcher = createFetchServer({ prefixUrl: Networks['Conflux eSpace'].scanOpenAPI });
+const walletInterface = new Interface(ESpaceWalletABI);
+export const eSpaceTestnetServer = ky.create({ prefixUrl: Networks['eSpace Testnet'].scanOpenAPI });
+export const eSpaceServer = ky.create({ prefixUrl: Networks['Conflux eSpace'].scanOpenAPI });
 
 interface AssetInfoFromScan {
   type: Omit<AssetType, AssetType.Native> & 'native';
@@ -19,6 +18,8 @@ interface AssetInfoFromScan {
   priceInUSDT?: string;
   iconUrl?: string;
 }
+
+type WalletAsset = { token: readonly [string, string, string, bigint]; balance: bigint };
 
 export const fetchESpaceServer = async ({
   hexAddress,
@@ -31,16 +32,16 @@ export const fetchESpaceServer = async ({
   chainType: ChainType;
   network: Network;
 }): Promise<Array<AssetInfo>> => {
-  const serverFetcher = chainType === ChainType.Mainnet ? eSpaceServerFetcher : eSpaceTestnetServerFetcher;
-  const walletContract = chainType === ChainType.Mainnet ? eSpaceWalletContract : eSpaceTestnetWalletContract;
+  const server = chainType === ChainType.Mainnet ? eSpaceServer : eSpaceTestnetServer;
+  const walletContractAddress = chainType === ChainType.Mainnet ? '0x2c7e015328f37f00f9b16e4adc9cedb1f8742069' : '0xce2104aa7233b27b0ba2e98ede59b6f78c06ae05';
+  const rpc = new HttpJsonRpcClient(network.endpoint);
 
   const fetchFromScan = () => {
     const scanInfoMap: Record<string, { type: AssetType; priceInUSDT?: string; icon?: string }> = Object.create(null);
     return from(
-      serverFetcher.fetchServer<{ message: string; status: '0' | '1'; result?: { list: Array<AssetInfoFromScan> } }>({
-        key: `eSpaceAssetsFromScan-${hexAddress}-${network.chainId}`,
-        url: `account/tokens?account=${hexAddress}${assetType ? `&tokenType=${assetType}` : ''}`,
-      }),
+      server
+        .get(`account/tokens?account=${hexAddress}${assetType ? `&tokenType=${assetType}` : ''}`)
+        .json<{ message: string; status: '0' | '1'; result?: { list: Array<AssetInfoFromScan> } }>(),
     ).pipe(
       concatMap((scanRes) => {
         if (scanRes?.status === '1') {
@@ -53,33 +54,29 @@ export const fetchESpaceServer = async ({
             });
 
             return from(
-              fetchChainBatch<[string, string]>({
-                key: `${network.name}|${network.chainId}|${hexAddress}`,
-                url: network.endpoint,
-                rpcs: [
-                  {
-                    method: 'eth_getBalance',
-                    params: [hexAddress, 'latest'],
-                  },
-                  {
-                    method: 'eth_call',
-                    params: [
-                      {
-                        to: walletContract.address,
-                        data: walletContract.encodeFunctionData('assetsOf', [
-                          hexAddress as `0x${string}`,
-                          scanRes?.result?.list?.filter((asset) => !!asset.contract)?.map((asset) => asset.contract) as Array<`0x${string}`>,
-                        ]),
-                      },
-                      'latest',
-                    ],
-                  },
-                ],
-              }),
+              rpc.batch<string>([
+                {
+                  method: 'eth_getBalance',
+                  params: [hexAddress, 'latest'],
+                },
+                {
+                  method: 'eth_call',
+                  params: [
+                    {
+                      to: walletContractAddress,
+                      data: walletInterface.encodeFunctionData('assetsOf', [
+                        hexAddress as `0x${string}`,
+                        scanRes?.result?.list?.filter((asset) => !!asset.contract)?.map((asset) => asset.contract) as Array<`0x${string}`>,
+                      ]),
+                    },
+                    'latest',
+                  ],
+                },
+              ]),
             ).pipe(
               map(([cfxBalance, assetsData]) => {
-                const assets = walletContract.decodeFunctionResult('assetsOf', assetsData)?.[0]?.map((asset) => {
-                  const info = asset.token as unknown as [string, string, string, number];
+                const assets = Array.from<WalletAsset>(walletInterface.decodeFunctionResult('assetsOf', assetsData)[0]).map((asset) => {
+                  const info = asset.token;
                   const contractAddress = toChecksumAddress(info[0]);
                   const scanInfo = scanInfoMap[contractAddress];
 
@@ -122,30 +119,26 @@ export const fetchESpaceServer = async ({
 
   const fetchFromChain = () => {
     return from(
-      fetchChainBatch<[string, string]>({
-        key: `eSpaceAssetsFromChain-${hexAddress}-${network.chainId}`,
-        url: network.endpoint,
-        rpcs: [
-          {
-            method: 'eth_getBalance',
-            params: [hexAddress, 'latest'],
-          },
-          {
-            method: 'eth_call',
-            params: [
-              {
-                to: walletContract.address,
-                data: walletContract.encodeFunctionData('assets', [hexAddress as `0x${string}`, 20n, 0n, 100n]),
-              },
-              'latest',
-            ],
-          },
-        ],
-      }),
+      rpc.batch<string>([
+        {
+          method: 'eth_getBalance',
+          params: [hexAddress, 'latest'],
+        },
+        {
+          method: 'eth_call',
+          params: [
+            {
+              to: walletContractAddress,
+              data: walletInterface.encodeFunctionData('assets', [hexAddress as `0x${string}`, 20n, 0n, 100n]),
+            },
+            'latest',
+          ],
+        },
+      ]),
     ).pipe(
       map(([cfxBalance, assetsData]) => {
-        const assets = walletContract.decodeFunctionResult('assets', assetsData)?.[1]?.map((asset) => {
-          const info = asset.token as unknown as [string, string, string, number];
+        const assets = Array.from<WalletAsset>(walletInterface.decodeFunctionResult('assets', assetsData)[1]).map((asset) => {
+          const info = asset.token;
           const contractAddress = toChecksumAddress(info[0]);
 
           return {

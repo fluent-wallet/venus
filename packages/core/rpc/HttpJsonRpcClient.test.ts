@@ -34,6 +34,22 @@ const createAbortableFetch = (): jest.Mock => {
 describe('HttpJsonRpcClient', () => {
   const endpoint = 'https://rpc.example';
 
+  it('request(): preserves an empty byte result', async () => {
+    const fetchFn = jest.fn().mockResolvedValue(createJsonResponse({ jsonrpc: '2.0', id: 1, result: '0x' }));
+    await expect(new HttpJsonRpcClient(endpoint, { fetchFn }).request('eth_getCode')).resolves.toBe('0x');
+  });
+
+  it('request(): does not cache or deduplicate broadcasts', async () => {
+    const fetchFn = jest.fn().mockImplementation(async (_url: unknown, init: RequestInit) => {
+      const { id } = JSON.parse(init.body as string);
+      return createJsonResponse({ jsonrpc: '2.0', id, result: '0xhash' });
+    });
+    const client = new HttpJsonRpcClient(endpoint, { fetchFn });
+    await Promise.all([client.request('eth_sendRawTransaction', ['0xraw']), client.request('eth_sendRawTransaction', ['0xraw'])]);
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(fetchFn.mock.calls.map(([, init]) => JSON.parse(init.body).id)).toEqual([1, 2]);
+  });
+
   it('request(): returns result on success', async () => {
     const fetchFn = jest.fn().mockResolvedValue(createJsonResponse({ jsonrpc: '2.0', id: 1, result: '0x1' }));
     const client = new HttpJsonRpcClient(endpoint, { fetchFn });

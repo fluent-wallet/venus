@@ -1,10 +1,11 @@
-import { createContract } from '@cfx-kit/dapp-utils/dist/contract';
-import { fetchChainMulticall } from '@cfx-kit/dapp-utils/dist/fetch';
+import MulticallABI from '@core/contracts/ABI/Multicall';
 import WalletConfigABI from '@core/contracts/ABI/WalletConfig';
-import { type Network, networkRpcPrefixMap } from '@core/database/models/Network';
+import { type Network, networkRpcPrefixMap, networkRpcSuffixMap } from '@core/database/models/Network';
+import { HttpJsonRpcClient } from '@core/rpc';
 import { NetworksWithChainIdKey } from '@core/utils/consts';
 import type { EventBus } from '@core/WalletCore/Events';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
+import { Interface } from 'ethers';
 import { inject, injectable } from 'inversify';
 import { catchError, debounceTime, filter, interval, map, retry, type Subscription, startWith, switchMap, throwError } from 'rxjs';
 import { currentNetworkObservable } from '../ReactInject/data/useCurrentNetwork';
@@ -13,6 +14,8 @@ import { configKeyList, configValueFormatters, defaultWalletConfigs, type Wallet
 
 const ONE_SECONDS = 1000;
 const ONE_HOUR = 60 * 60 * ONE_SECONDS;
+const walletConfigInterface = new Interface(WalletConfigABI);
+const multicallInterface = new Interface(MulticallABI);
 
 export const WALLET_CONFIG_EVENT = 'WalletConfigEvent';
 
@@ -48,24 +51,24 @@ export class WalletConfigServer {
     const networkConfig = NetworksWithChainIdKey[`${network.networkType}_${network.chainId}`];
     if (!networkConfig || !('multicallContractAddress' in networkConfig) || !('configContractAddress' in networkConfig)) return;
     const { multicallContractAddress, configContractAddress } = networkConfig;
-    const walletConfigContract = createContract({ address: configContractAddress, ABI: WalletConfigABI });
     const rpcPrefix = networkRpcPrefixMap[network.networkType];
     this._pollingSub = interval(ONE_HOUR)
       .pipe(
         startWith(0),
-        switchMap(() => {
-          return fetchChainMulticall({
-            url: network.endpoint,
-            method: `${rpcPrefix}_call`,
-            multicallContractAddress,
-            data: configKeyList.map((key) => {
-              const formatter = configValueFormatters[key as 'pendingPollingInterval'];
-              return {
-                contractAddress: walletConfigContract.address,
-                encodedData: walletConfigContract.encodeFunctionData('get', [key]),
-                decodeFunc: (v) => (v === '' ? null : formatter(walletConfigContract.decodeFunctionResult('get', v)[0])),
-              };
-            }),
+        switchMap(async () => {
+          const raw = await new HttpJsonRpcClient(network.endpoint).request<string>(`${rpcPrefix}_call`, [
+            {
+              to: multicallContractAddress,
+              data: multicallInterface.encodeFunctionData('aggregate', [
+                configKeyList.map((key) => [configContractAddress, walletConfigInterface.encodeFunctionData('get', [key])]),
+              ]),
+            },
+            networkRpcSuffixMap[network.networkType],
+          ]);
+          const values = multicallInterface.decodeFunctionResult('aggregate', raw)[1];
+          return configKeyList.map((key, index) => {
+            const value: string = values[index];
+            return value === '0x' || value === '' ? null : configValueFormatters[key](walletConfigInterface.decodeFunctionResult('get', value)[0]);
           });
         }),
         catchError((err) => {

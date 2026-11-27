@@ -1,4 +1,5 @@
-import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
+import { CHAIN_RPC_ABORTED, CoreError } from '@core/errors';
+import { HttpJsonRpcClient } from '@core/rpc';
 import { NetworkType } from '@core/types';
 import type { INetwork } from '@service/core';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -37,24 +38,16 @@ const syncMetricsShape = (previous: RpcMetricsMap, endpoints: string[]): RpcMetr
   return next;
 };
 
-const isAbortError = (error: unknown) => error instanceof Error && error.name === 'AbortError';
+const isAbortError = (error: unknown) =>
+  (error instanceof CoreError && error.code === CHAIN_RPC_ABORTED) || (error instanceof Error && error.name === 'AbortError');
 
 const fetchRpcBlockNumber = async (networkType: INetwork['networkType'], endpoint: string, signal: AbortSignal): Promise<bigint> => {
   if (networkType === NetworkType.Conflux) {
-    const result = await fetchChain<string>({
-      url: endpoint,
-      method: 'cfx_epochNumber',
-      params: ['latest_state'],
-      options: { signal },
-    });
+    const result = await new HttpJsonRpcClient(endpoint).request<string>('cfx_epochNumber', ['latest_state'], { signal });
     return BigInt(result);
   }
 
-  const result = await fetchChain<string>({
-    url: endpoint,
-    method: 'eth_blockNumber',
-    options: { signal },
-  });
+  const result = await new HttpJsonRpcClient(endpoint).request<string>('eth_blockNumber', undefined, { signal });
   return BigInt(result);
 };
 

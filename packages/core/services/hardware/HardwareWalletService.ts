@@ -9,9 +9,9 @@ import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
 import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
 import type { HardwareAccount, HardwareConnectOptions, HardwareOperationOptions, IBSIMWallet, IHardwareWallet } from '@core/types';
 import { NetworkType } from '@core/types';
-import { toChecksum } from '@core/utils/account';
-import { convertHexToBase32 } from '@core/utils/address';
+import { toAccountAddress, toChecksum } from '@core/utils/account';
 import { Q } from '@nozbe/watermelondb';
+import { hexAddressToBase32 } from 'cive/utils';
 import { inject, injectable } from 'inversify';
 import { Platform } from 'react-native';
 import { type BackupSeedParams, type DeriveKeyParams, type RestoreSeedParams, startBleDeviceScan, type TransportError } from 'react-native-bsim';
@@ -237,7 +237,10 @@ export class HardwareWalletService {
             record.network.set(network);
             record.assetRule.set(assetRule);
             record.hex = checksum;
-            record.base32 = network.networkType === NetworkType.Conflux ? convertHexToBase32(checksum, network.netId) : checksum;
+            record.base32 =
+              network.networkType === NetworkType.Conflux
+                ? hexAddressToBase32({ hexAddress: toAccountAddress(checksum) as `0x${string}`, networkId: network.netId })
+                : checksum;
           });
         }),
       );

@@ -1,7 +1,7 @@
 import ESpaceTokenList from '@core/contracts/ABI/ESpaceTokenList';
 import { CoreError, RECEIVE_ASSETS_SYNC_DECODE_FAILED, RECEIVE_ASSETS_SYNC_FETCH_FAILED } from '@core/errors';
 import type { IChainProvider } from '@core/types';
-import { Interface } from '@ethersproject/abi';
+import { Interface } from 'ethers';
 
 const tokenListIface = new Interface(ESpaceTokenList);
 export type FetchFunction = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;

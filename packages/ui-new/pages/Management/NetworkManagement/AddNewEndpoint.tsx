@@ -1,9 +1,9 @@
 import ClearIcon from '@assets/icons/clear.svg';
 import ErrorIcon from '@assets/icons/message-fail.svg';
-import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
 import Button from '@components/Button';
 import { SheetBody, SheetFooter, SheetHeader, SheetScrollView } from '@components/Sheet';
 import Text from '@components/Text';
+import { HttpJsonRpcClient } from '@core/rpc';
 import { NetworkType } from '@core/types';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import type { StackNavigation } from '@router/configs';
@@ -13,8 +13,8 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, TextInput, type TextInputChangeEvent, View } from 'react-native';
 
 const getChainIdMap = {
-  [NetworkType.Conflux]: (endpoint: string) => fetchChain<{ chainId: string }>({ url: endpoint, method: 'cfx_getStatus' }).then((res) => res.chainId),
-  [NetworkType.Ethereum]: (endpoint: string) => fetchChain<string>({ url: endpoint, method: 'eth_chainId' }),
+  [NetworkType.Conflux]: (endpoint: string) => new HttpJsonRpcClient(endpoint).request<{ chainId: string }>('cfx_getStatus').then((res) => res.chainId),
+  [NetworkType.Ethereum]: (endpoint: string) => new HttpJsonRpcClient(endpoint).request<string>('eth_chainId'),
 };
 
 const AddNewEndpoint = () => {

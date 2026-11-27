@@ -5,12 +5,12 @@ module.exports = async ({github, context}) => {
     const version = process.env.PACKAGE_VERSION
     let tags = await github.rest.repos.listTags({owner, repo})
     tags = (tags && tags.data) || []
-    const re = new RegExp(`v${version}-qa\.`)
+    const prefix = `v${version}-qa.`
   
     const next_sub_version =
       tags.reduce((version, {name}) => {
-        if (!re.test(name)) return version
-        const sub_version = parseInt(name.replace(re, ''), 10)
+        if (!name.startsWith(prefix)) return version
+        const sub_version = parseInt(name.slice(prefix.length), 10)
         if (!sub_version) return version
         return Math.max(version, sub_version)
       }, 0) + 1
@@ -22,4 +22,3 @@ module.exports = async ({github, context}) => {
       prod_tag: `v${version}`,
     }
   }
-  
