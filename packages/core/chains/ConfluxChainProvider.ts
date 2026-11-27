@@ -17,6 +17,7 @@ import type {
   SignedTransaction,
   TransactionParams,
 } from '@core/types';
+import { addHexPrefix } from '@core/utils/base';
 import { NetworkType } from '@core/utils/consts';
 import type { Address as Base32Address } from 'cive';
 import { signMessage as signConfluxMessage, signTransaction as signConfluxTransaction } from 'cive/accounts';
@@ -119,7 +120,7 @@ export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTrans
     }
 
     const rawTransaction = await signConfluxTransaction({
-      privateKey: signer.getPrivateKey() as Hex,
+      privateKey: addHexPrefix(signer.getPrivateKey()) as Hex,
       transaction: {
         chainId: Number(payload.chainId),
         nonce,
@@ -262,7 +263,7 @@ export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTrans
     if (signer.type === 'software') {
       const isHexBytes = message.length % 2 === 0 && /^0x[0-9a-fA-F]*$/.test(message);
       return signConfluxMessage({
-        privateKey: signer.getPrivateKey() as Hex,
+        privateKey: addHexPrefix(signer.getPrivateKey()) as Hex,
         message: isHexBytes ? { raw: message as Hex } : message,
       });
     } else {
